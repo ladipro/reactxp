@@ -15,7 +15,7 @@ import { RootView as RootViewBase, RootViewUsingProps as RootViewUsingPropsBase,
     BaseRootViewProps, RootViewPropsWithMainViewType, RootViewState, BaseRootView } from '../native-common/RootView';
 import Input from './Input';
 import EventHelpers from '../native-common/utils/EventHelpers';
-import FocusManager from './utils/FocusManager';
+import { FocusableComponentWrapped, FocusManager } from './utils/FocusManager';
 import FrontLayerViewManager from '../native-common/FrontLayerViewManager';
 import Timers from '../common/utils/Timers';
 import UserInterface from '../native-common/UserInterface';
@@ -48,14 +48,60 @@ function applyDesktopBehaviorMixin<TRootViewBase extends Constructor<React.Compo
         _keyboardHandlerInstalled = false;
         _isNavigatingWithKeyboardUpateTimer: number | undefined;
 
+        _shouldEnableKeyboardNavigationModeOnFocus = false;
+        _prevFocusedComponent: FocusableComponentWrapped|undefined;
+        _updateKeyboardNavigationModeOnFocusTimer: number|undefined;
+
         constructor(...args: any[]) {
             super(...args);
             // Initialize the root FocusManager which is aware of all
             // focusable elements.
-            this._focusManager = new FocusManager(undefined);
+            this._focusManager = new FocusManager(undefined, this);
+        }
+
+        componentDidMount() {
+            if (super.componentDidMount) {
+                super.componentDidMount();
+            }
+
+            FocusManager.onComponentFocus.subscribe(this._onComponentFocus);
+        }
+
+        componentWillUnmount() {
+            if (super.componentWillUnmount) {
+                super.componentWillUnmount();
+            }
+
+            FocusManager.onComponentFocus.unsubscribe(this._onComponentFocus);
+        }
+
+        _onComponentFocus = (wrapped: FocusableComponentWrapped) => {
+            if (this._updateKeyboardNavigationModeOnFocusTimer) {
+                Timers.clearTimeout(this._updateKeyboardNavigationModeOnFocusTimer);
+            }
+
+            this._updateKeyboardNavigationModeOnFocusTimer = Timers.setTimeout(() => {
+                this._updateKeyboardNavigationModeOnFocusTimer = undefined;
+
+                const prev = this._prevFocusedComponent;
+                const curShouldEnable = this._shouldEnableKeyboardNavigationModeOnFocus;
+
+                this._prevFocusedComponent = wrapped;
+                this._shouldEnableKeyboardNavigationModeOnFocus = true;
+
+                if ((prev && (prev.component === wrapped.component)) ||
+                    (wrapped.component === FocusManager.getLastFocusedProgrammatically(true))) {
+                    return;
+                }
+
+                if (!UserInterface.isNavigatingWithKeyboard() && curShouldEnable) {
+                    this._updateKeyboardNavigationState(true);
+                }
+            }, 100);
         }
 
         _onTouchStartCapture = (e: RN.NativeSyntheticEvent<any>) => {
+            this._shouldEnableKeyboardNavigationModeOnFocus = false;
             this._updateKeyboardNavigationState(false);
         }
 
@@ -71,7 +117,7 @@ function applyDesktopBehaviorMixin<TRootViewBase extends Constructor<React.Compo
                 const activeComponent = FocusManager.getCurrentFocusedComponent();
 
                 if (this._isNavigatingWithKeyboardUpateTimer) {
-                    clearTimeout(this._isNavigatingWithKeyboardUpateTimer);
+                    Timers.clearTimeout(this._isNavigatingWithKeyboardUpateTimer);
                 }
 
                 this._isNavigatingWithKeyboardUpateTimer = Timers.setTimeout(() => {
@@ -86,7 +132,7 @@ function applyDesktopBehaviorMixin<TRootViewBase extends Constructor<React.Compo
 
         _updateKeyboardNavigationState(isNavigatingWithKeyboard: boolean) {
             if (this._isNavigatingWithKeyboardUpateTimer) {
-                clearTimeout(this._isNavigatingWithKeyboardUpateTimer);
+                Timers.clearTimeout(this._isNavigatingWithKeyboardUpateTimer);
                 this._isNavigatingWithKeyboardUpateTimer = undefined;
             }
 

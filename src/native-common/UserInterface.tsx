@@ -19,7 +19,8 @@ import Types = require('../common/Types');
 
 export class UserInterface extends RX.UserInterface {
     private _touchLatencyThresholhdMs: number|undefined;
-    private _isNavigatingWithKeyboard: boolean = false;
+    private _isNavigatingWithKeyboard = false;
+    private _isNativeFocusOutlineEnabled = true;
     private _rootViewUsingPropsFactory: RN.ComponentProvider | undefined;
 
     constructor() {
@@ -206,6 +207,18 @@ export class UserInterface extends RX.UserInterface {
 
     private _keyboardNavigationStateChanged = (isNavigatingWithKeyboard: boolean) => {
         this._isNavigatingWithKeyboard = isNavigatingWithKeyboard;
+    }
+
+    setNativeFocusOutlineEnabled(enabled: boolean) {
+        if (this._isNativeFocusOutlineEnabled !== enabled) {
+            this._isNativeFocusOutlineEnabled = enabled;
+            this.nativeFocusOutlineEnabledEvent.fire(enabled);
+        }
+        this._isNativeFocusOutlineEnabled = enabled;
+    }
+
+    isNativeFocusOutlineEnabled(): boolean {
+        return this._isNativeFocusOutlineEnabled;
     }
 }
 

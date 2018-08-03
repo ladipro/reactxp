@@ -7,11 +7,14 @@
 * Manages focusable elements for better keyboard navigation (RN desktop version)
 */
 
+import SubscribableEvent from 'subscribableevent';
+
+import { FocusableComponent } from '../../common/Interfaces';
 import { FocusManager as FocusManagerBase,
     FocusableComponentInternal as FocusableComponentInternalBase,
     applyFocusableComponentMixin as applyFocusableComponentMixinBase,
     StoredFocusableComponent as StoredFocusableComponentBase } from '../../common/utils/FocusManager';
-
+import { runAfterArbitration, cancelRunAfterArbitration } from '../../common/utils/AutoFocusHelper';
 import { ImportantForAccessibilityValue } from '../../native-common/AccessibilityUtil';
 import AppConfig from '../../common/AppConfig';
 import Platform from '../../native-common/Platform';
@@ -40,6 +43,7 @@ export interface FocusManagerFocusableComponent {
     getTabIndex(): number | undefined;
     getImportantForAccessibility(): ImportantForAccessibilityValue | undefined;
     onFocus(): void;
+    onBlur(): void;
     focus(): void;
     updateNativeAccessibilityProps(): void;
 }
@@ -52,11 +56,17 @@ export interface FocusableComponentInternal extends FocusManagerFocusableCompone
     onFocusSink?: () => void;
 }
 
-export class FocusManager extends FocusManagerBase {
+export interface FocusableComponentWrapped {
+    component: FocusableComponent;
+    isAvailable: () => boolean;
+}
 
-    constructor(parent: FocusManager | undefined) {
-        super(parent);
-    }
+export class FocusManager extends FocusManagerBase {
+    static onComponentFocus = new SubscribableEvent<(component: FocusableComponentWrapped) => void>();
+    static onComponentBlur = new SubscribableEvent<(component: FocusableComponentWrapped) => void>();
+
+    private static _runAfterArbitrationId: number | undefined;
+    private static _lastFocusedProgrammatically: FocusableComponentInternal|undefined;
 
     protected /* static */ addFocusListenerOnComponent(component: FocusableComponentInternal, onFocus: () => void): void {
         // We intercept the "onFocus" all the focusable elements have to have
@@ -69,80 +79,40 @@ export class FocusManager extends FocusManagerBase {
 
     protected /* static */ focusComponent(component: FocusableComponentInternal): boolean {
         if (component && component.focus) {
+            FocusManager.setLastFocusedProgrammatically(component);
             component.focus();
             return true;
         }
         return false;
     }
 
-    private static focusFirst() {
-        const focusable = Object.keys(FocusManager._allFocusableComponents)
-            .map(componentId => FocusManager._allFocusableComponents[componentId])
-            .filter(storedComponent =>
-                !storedComponent.accessibleOnly &&
-                !storedComponent.removed &&
-                !storedComponent.restricted &&
-                !storedComponent.limitedCount &&
-                !storedComponent.limitedCountAccessible);
-
-        if (focusable.length) {
-            focusable.sort((a, b) => {
-                // This function does its best, but contrary to DOM-land we have no idea on where the native components
-                // ended up on screen, unless some expensive measuring is done on them.
-                // So we defer to less than optimal "add focusable component" order. A lot of factors (absolute positioning,
-                // instance replacements, etc.) can alter the correctness of this method, but I see no other way.
-                if (a === b) {
-                    return 0;
-                }
-
-                if (a.numericId < b.numericId) {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            });
-
-            let fc = focusable[0].component as FocusableComponentInternal;
-
-            if (fc && fc.focus) {
-                fc.focus();
-            }
-        }
-    }
-
-    protected /* static */ resetFocus(focusFirstWhenNavigatingWithKeyboard: boolean) {
-        if (FocusManager._resetFocusTimer) {
-            clearTimeout(FocusManager._resetFocusTimer);
-            FocusManager._resetFocusTimer = undefined;
+    protected /* static */ resetFocus(focusFirstWhenNavigatingWithKeyboard: boolean, callback?: () => void) {
+        if (FocusManager._runAfterArbitrationId) {
+            cancelRunAfterArbitration(FocusManager._runAfterArbitrationId);
+            FocusManager._runAfterArbitrationId = undefined;
         }
 
         if (UserInterface.isNavigatingWithKeyboard() && focusFirstWhenNavigatingWithKeyboard) {
             // When we're in the keyboard navigation mode, we want to have the
             // first focusable component to be focused straight away, without the
             // necessity to press Tab.
-            // Defer the focusing to let the view finish its initialization and to allow for manual focus setting (if any)
-            // to be processed (the asynchronous nature of focus->onFocus path requires a delay)
-            FocusManager._resetFocusTimer = Timers.setTimeout(() => {
-                FocusManager._resetFocusTimer = undefined;
+            FocusManager._requestFocusFirst();
 
-                // Check if the currently focused component is without limit/restriction.
-                // We skip setting focus on "first" component in that case because:
-                // - focusFirst has its limits, to say it gently
-                // - We ended up in resetFocus for a reason that is not true anymore (mostly because focus was set manually)
-                const storedComponent = FocusManager._currentFocusedComponent;
-                if (!storedComponent ||
-                    storedComponent.accessibleOnly ||
-                    storedComponent.removed ||
-                    storedComponent.restricted ||
-                    (storedComponent.limitedCount > 0) ||
-                    (storedComponent.limitedCountAccessible > 0)) {
-                    FocusManager.focusFirst();
-                }
-            }, 500);
+            if (callback) {
+                FocusManager._runAfterArbitrationId = runAfterArbitration(() => {
+                    // Making sure to run after all autoFocus logic is done.
+                    FocusManager._runAfterArbitrationId = undefined;
+                    callback();
+                });
+            }
         }
     }
 
     protected /* static */ _updateComponentFocusRestriction(storedComponent: StoredFocusableComponent) {
+        if (storedComponent.runAfterArbitrationId) {
+            cancelRunAfterArbitration(storedComponent.runAfterArbitrationId);
+            storedComponent.runAfterArbitrationId = undefined;
+        }
 
         let newOverrideType: OverrideType = OverrideType.None;
         if (storedComponent.restricted || (storedComponent.limitedCount > 0)) {
@@ -186,6 +156,33 @@ export class FocusManager extends FocusManagerBase {
         // Refresh the native view
         updateNativeAccessibilityProps(component);
     }
+
+    static setLastFocusedProgrammatically(component: FocusableComponentInternal) {
+        this._lastFocusedProgrammatically = component;
+    }
+
+    static getLastFocusedProgrammatically(reset?: boolean): FocusableComponentInternal|undefined {
+        const ret = FocusManager._lastFocusedProgrammatically;
+        if (ret && reset) {
+            FocusManager._lastFocusedProgrammatically = undefined;
+        }
+        return ret;
+    }
+
+    static getFocusableComponentWrapped(component: FocusableComponentInternal): FocusableComponentWrapped|undefined {
+        const storedComponent = component.focusableComponentId
+            ? FocusManager._allFocusableComponents[component.focusableComponentId]
+            : undefined;
+
+        if (storedComponent) {
+            return {
+                component,
+                isAvailable: () => !storedComponent.removed && !storedComponent.restricted
+            };
+        }
+
+        return undefined;
+    }
 }
 
 function updateNativeAccessibilityProps(component: FocusableComponentInternal) {
@@ -219,12 +216,29 @@ export function applyFocusableComponentMixin(Component: any, isConditionallyFocu
     if (!accessibleOnly) {
         // Hook 'onFocus'
         inheritMethod('onFocus', function (this: FocusableComponentInternal, origCallback: Function) {
+            const wrapped = FocusManager.getFocusableComponentWrapped(this);
+
+            if (wrapped) {
+                FocusManager.onComponentFocus.fire(wrapped);
+            }
+
             if (this.onFocusSink) {
                 this.onFocusSink();
             } else {
                 if (AppConfig.isDevelopmentMode()) {
                     console.error('FocusableComponentMixin: onFocusSink doesn\'t exist!');
                 }
+            }
+
+            origCallback.call(this);
+        });
+
+        // Hook 'onBlur'
+        inheritMethod('onBlur', function (this: FocusableComponentInternal, origCallback: Function) {
+            const wrapped = FocusManager.getFocusableComponentWrapped(this);
+
+            if (wrapped) {
+                FocusManager.onComponentBlur.fire(wrapped);
             }
 
             origCallback.call(this);
@@ -252,6 +266,8 @@ export function applyFocusableComponentMixin(Component: any, isConditionallyFocu
             // doesn't lose it right away).
             // We try to simulate the right behavior through a trick.
             inheritMethod('focus', function (this: FocusableComponentInternal, origCallback: any) {
+                FocusManager.setLastFocusedProgrammatically(this);
+
                 let tabIndex: number | undefined = this.getTabIndex();
                 // Check effective tabIndex
                 if (tabIndex !== undefined && tabIndex < 0) {

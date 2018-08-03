@@ -33,6 +33,9 @@ const KEY_CODE_APP = 500;
 const DOWN_KEYCODES = [KEY_CODE_SPACE, KEY_CODE_ENTER, KEY_CODE_F10, KEY_CODE_APP];
 const UP_KEYCODES = [KEY_CODE_SPACE];
 
+let _isNativeFocusOutlineEnabled = UserInterface.isNativeFocusOutlineEnabled();
+UserInterface.nativeFocusOutlineEnabledEvent.subscribe(enabled => _isNativeFocusOutlineEnabled = enabled);
+
 export interface ViewContext extends ViewContextCommon {
     isRxParentAText?: boolean;
     focusManager?: FocusManager;
@@ -324,7 +327,7 @@ export class View extends ViewCommon implements React.ChildContextProvider<ViewC
                 isTabStop: windowsTabFocusable,
                 tabIndex: tabIndex,
                 importantForAccessibility: importantForAccessibility,
-                disableSystemFocusVisuals: false,
+                disableSystemFocusVisuals: !_isNativeFocusOutlineEnabled,
                 handledKeyDownKeys: DOWN_KEYCODES,
                 handledKeyUpKeys: UP_KEYCODES,
                 onKeyDown: this._onFocusableKeyDown,
@@ -427,7 +430,7 @@ export class View extends ViewCommon implements React.ChildContextProvider<ViewC
         return !!this._popupContainer && this._popupContainer.isHidden();
     }
 
-    setFocusRestricted(restricted: boolean) {
+    setFocusRestricted(restricted: boolean, callback?: () => void) {
         if (!this._focusManager || !this.props.restrictFocusWithin) {
             console.error('View: setFocusRestricted method requires restrictFocusWithin property to be set');
             return;
@@ -435,9 +438,9 @@ export class View extends ViewCommon implements React.ChildContextProvider<ViewC
 
         if (!this._isHidden()) {
             if (restricted) {
-                this._focusManager.restrictFocusWithin(RestrictFocusType.RestrictedFocusFirst);
+                this._focusManager.restrictFocusWithin(RestrictFocusType.RestrictedFocusFirst, false, callback);
             } else {
-                this._focusManager.removeFocusRestriction();
+                this._focusManager.removeFocusRestriction(callback);
             }
         }
         this._isFocusRestricted = restricted;
@@ -525,6 +528,10 @@ export class View extends ViewCommon implements React.ChildContextProvider<ViewC
     }
 
     private _onBlur = (e: React.SyntheticEvent<any>): void => {
+        if (e.currentTarget === e.target) {
+            this.onBlur();
+        }
+
         if (this.props.onBlur) {
             this.props.onBlur(EventHelpers.toFocusEvent(e));
         }
@@ -533,6 +540,10 @@ export class View extends ViewCommon implements React.ChildContextProvider<ViewC
     // From FocusManagerFocusableComponent interface
     //
     onFocus() {
+        // Focus Manager hook
+    }
+
+    onBlur() {
         // Focus Manager hook
     }
 

@@ -17,8 +17,13 @@ import { applyFocusableComponentMixin, FocusManagerFocusableComponent } from '..
 import { TextInput as TextInputBase } from '../native-common/TextInput';
 
 export class TextInput extends TextInputBase implements FocusManagerFocusableComponent {
+    private _onFocusHandler: ((e: RN.NativeSyntheticEvent<RN.TextInputFocusEventData>) => void) | undefined;
+    private _onBlurHandler: ((e: RN.NativeSyntheticEvent<RN.TextInputFocusEventData>) => void) | undefined;
 
     protected _render(props: RN.TextInputProps, onMount: (textInput: any) => void): JSX.Element {
+        this._onFocusHandler = props.onFocus;
+        this._onBlurHandler = props.onBlur;
+
         const extendedProps: RN.ExtendedTextInputProps = {
             tabIndex: this.getTabIndex()
         };
@@ -29,25 +34,37 @@ export class TextInput extends TextInputBase implements FocusManagerFocusableCom
                 { ...extendedProps }
                 ref={ onMount }
                 importantForAccessibility={ this.getImportantForAccessibility() }
-                onFocus={ (e: RN.NativeSyntheticEvent<RN.TextInputFocusEventData>) => this._onFocusEx(e, props.onFocus) }
+                onFocus={ this._onFocusEx }
+                onBlur={ this._onBlurEx }
             />
         );
     }
 
-    private _onFocusEx(e: RN.NativeSyntheticEvent<RN.TextInputFocusEventData>, origHandler:
-            ((e: RN.NativeSyntheticEvent<RN.TextInputFocusEventData>) => void) | undefined) {
+    private _onFocusEx = (e: RN.NativeSyntheticEvent<RN.TextInputFocusEventData>) => {
         if (e.currentTarget === e.target) {
             this.onFocus();
         }
 
-        if (origHandler) {
-            origHandler(e);
+        if (this._onFocusHandler) {
+            this._onFocusHandler(e);
+        }
+    }
+
+    private _onBlurEx = (e: RN.NativeSyntheticEvent<RN.TextInputFocusEventData>) => {
+        this.onBlur();
+
+        if (this._onBlurHandler) {
+            this._onBlurHandler(e);
         }
     }
 
     // From FocusManagerFocusableComponent interface
     //
     onFocus() {
+        // Focus Manager hook
+    }
+
+    onBlur() {
         // Focus Manager hook
     }
 

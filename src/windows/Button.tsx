@@ -29,6 +29,9 @@ const UP_KEYCODES = [KEY_CODE_SPACE];
 
 let FocusableAnimatedView = RNW.createFocusableComponent(RN.Animated.View);
 
+let _isNativeFocusOutlineEnabled = UserInterface.isNativeFocusOutlineEnabled();
+UserInterface.nativeFocusOutlineEnabledEvent.subscribe(enabled => _isNativeFocusOutlineEnabled = enabled);
+
 export interface ButtonContext extends ButtonContextBase {
     isRxParentAContextMenuResponder?: boolean;
     isRxParentAFocusableInSameFocusManager?: boolean;
@@ -80,7 +83,7 @@ export class Button extends ButtonBase implements React.ChildContextProvider<But
             isTabStop: windowsTabFocusable,
             tabIndex: tabIndex,
             importantForAccessibility: importantForAccessibility,
-            disableSystemFocusVisuals: false,
+            disableSystemFocusVisuals: !_isNativeFocusOutlineEnabled,
             handledKeyDownKeys: DOWN_KEYCODES,
             handledKeyUpKeys: UP_KEYCODES,
             onKeyDown: this._onKeyDown,
@@ -158,25 +161,25 @@ export class Button extends ButtonBase implements React.ChildContextProvider<But
                 // ENTER triggers press on key down
                 if (key === KEY_CODE_ENTER) {
                     this.props.onPress(keyEvent);
-                }  
+                }
             }
-            
+
             if (this.props.onContextMenu) {
                 let key = keyEvent.keyCode;
                 if ((key === KEY_CODE_APP) || (key === KEY_CODE_F10 && keyEvent.shiftKey)) {
-                    if (this._isMounted) { 
-                        UserInterface.measureLayoutRelativeToWindow(this).then( layoutInfo => { 
-                            // need to simulate the mouse event so that we 
-                            // can show the context menu in the right position 
-                            if (this._isMounted) { 
-                                let mouseEvent = EventHelpers.keyboardToMouseEvent(keyEvent, layoutInfo, 
-                                    this._getContextMenuOffset());                              
+                    if (this._isMounted) {
+                        UserInterface.measureLayoutRelativeToWindow(this).then( layoutInfo => {
+                            // need to simulate the mouse event so that we
+                            // can show the context menu in the right position
+                            if (this._isMounted) {
+                                let mouseEvent = EventHelpers.keyboardToMouseEvent(keyEvent, layoutInfo,
+                                    this._getContextMenuOffset());
                                 if (this.props.onContextMenu) {
-                                    this.props.onContextMenu(mouseEvent);  
-                                }  
-                            }                     
+                                    this.props.onContextMenu(mouseEvent);
+                                }
+                            }
                         });
-                    } 
+                    }
                 }
             }
         }
@@ -207,6 +210,10 @@ export class Button extends ButtonBase implements React.ChildContextProvider<But
     }
 
     private _onBlur = (e: React.SyntheticEvent<any>): void => {
+        if (e.currentTarget === e.target) {
+            this.onBlur();
+        }
+
         this._isFocusedWithKeyboard = false;
         this._onHoverEnd(e);
 
@@ -238,6 +245,10 @@ export class Button extends ButtonBase implements React.ChildContextProvider<But
     // From FocusManagerFocusableComponent interface
     //
     onFocus() {
+        // Focus Manager hook
+    }
+
+    onBlur() {
         // Focus Manager hook
     }
 

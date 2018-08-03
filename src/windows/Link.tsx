@@ -28,6 +28,9 @@ const KEY_CODE_APP = 500;
 const DOWN_KEYCODES = [KEY_CODE_SPACE, KEY_CODE_ENTER, KEY_CODE_APP, KEY_CODE_F10];
 const UP_KEYCODES = [KEY_CODE_SPACE];
 
+let _isNativeFocusOutlineEnabled = UserInterface.isNativeFocusOutlineEnabled();
+UserInterface.nativeFocusOutlineEnabledEvent.subscribe(enabled => _isNativeFocusOutlineEnabled = enabled);
+
 let FocusableText = RNW.createFocusableComponent(RN.Text);
 
 export interface LinkState {
@@ -35,7 +38,7 @@ export interface LinkState {
 }
 
 export class Link extends LinkBase<LinkState> implements FocusManagerFocusableComponent {
-    
+
     // Offset to show context menu using keyboard.
     protected _getContextMenuOffset() {
         return { x: 0, y: 0 };
@@ -116,12 +119,13 @@ export class Link extends LinkBase<LinkState> implements FocusManagerFocusableCo
             isTabStop: windowsTabFocusable,
             tabIndex: tabIndex,
             importantForAccessibility: importantForAccessibility,
-            disableSystemFocusVisuals: false,
+            disableSystemFocusVisuals: !_isNativeFocusOutlineEnabled,
             handledKeyDownKeys: DOWN_KEYCODES,
             handledKeyUpKeys: UP_KEYCODES,
             onKeyDown: this._onKeyDown,
             onKeyUp: this._onKeyUp,
             onFocus: this._onFocus,
+            onBlur: this._onBlur,
             onAccessibilityTap: this._onPress
         };
 
@@ -147,6 +151,7 @@ export class Link extends LinkBase<LinkState> implements FocusManagerFocusableCo
                 { ...internalProps }
                 ref={ this._onNativeHyperlinkRef }
                 onFocus={ this._onFocus }
+                onBlur={ this._onBlur }
             />
         );
     }
@@ -197,23 +202,23 @@ export class Link extends LinkBase<LinkState> implements FocusManagerFocusableCo
             // Defer to base class
             this._onPress(keyEvent);
         }
-        
+
         if (this.props.onContextMenu) {
             let key = keyEvent.keyCode;
             if ((key === KEY_CODE_APP) || (key === KEY_CODE_F10 && keyEvent.shiftKey)) {
-                if (this._isMounted) { 
-                    UserInterface.measureLayoutRelativeToWindow(this).then( layoutInfo => {  
-                        // need to simulate the mouse event so that we 
-                        // can show the context menu in the right position 
-                        if (this._isMounted) {                       
+                if (this._isMounted) {
+                    UserInterface.measureLayoutRelativeToWindow(this).then( layoutInfo => {
+                        // need to simulate the mouse event so that we
+                        // can show the context menu in the right position
+                        if (this._isMounted) {
                             let mouseEvent = EventHelpers.keyboardToMouseEvent(keyEvent, layoutInfo, this._getContextMenuOffset());
                             if (this.props.onContextMenu) {
-                                this.props.onContextMenu(mouseEvent);    
-                            }   
-                        }                 
+                                this.props.onContextMenu(mouseEvent);
+                            }
+                        }
                     });
-                } 
-                
+                }
+
             }
         }
     }
@@ -232,9 +237,19 @@ export class Link extends LinkBase<LinkState> implements FocusManagerFocusableCo
         }
     }
 
+    private _onBlur = (e: React.SyntheticEvent<any>): void => {
+        if (e.currentTarget === e.target) {
+            this.onBlur();
+        }
+    }
+
     // From FocusManagerFocusableComponent interface
     //
     onFocus() {
+        // Focus Manager hook
+    }
+
+    onBlur() {
         // Focus Manager hook
     }
 

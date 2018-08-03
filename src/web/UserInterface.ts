@@ -17,8 +17,26 @@ import FrontLayerViewManager from './FrontLayerViewManager';
 import RX = require('../common/Interfaces');
 import Types = require('../common/Types');
 
+let _nativeFocusOutlineDisabler: HTMLStyleElement|undefined;
+
+function _setNativeFocusOutlineEnabled(enabled: boolean) {
+    if (typeof document !== 'undefined') {
+        if (!enabled && !_nativeFocusOutlineDisabler) {
+            const disableNativeOutline = '*:focus { outline: none; }';
+            _nativeFocusOutlineDisabler = document.createElement('style');
+            _nativeFocusOutlineDisabler.type = 'text/css';
+            _nativeFocusOutlineDisabler.appendChild(document.createTextNode(disableNativeOutline));
+            document.head.appendChild(_nativeFocusOutlineDisabler);
+        } else if (enabled && _nativeFocusOutlineDisabler) {
+            document.head.removeChild(_nativeFocusOutlineDisabler);
+            _nativeFocusOutlineDisabler = undefined;
+        }
+    }
+}
+
 export class UserInterface extends RX.UserInterface {
-    private _isNavigatingWithKeyboard: boolean = false;
+    private _isNavigatingWithKeyboard = false;
+    private _isNativeFocusOutlineEnabled = true;
 
     constructor() {
         super();
@@ -144,6 +162,19 @@ export class UserInterface extends RX.UserInterface {
 
     private _keyboardNavigationStateChanged = (isNavigatingWithKeyboard: boolean) => {
         this._isNavigatingWithKeyboard = isNavigatingWithKeyboard;
+    }
+
+    setNativeFocusOutlineEnabled(enabled: boolean) {
+        if (this._isNativeFocusOutlineEnabled !== enabled) {
+            this._isNativeFocusOutlineEnabled = enabled;
+            _setNativeFocusOutlineEnabled(enabled);
+            this.nativeFocusOutlineEnabledEvent.fire(enabled);
+        }
+        this._isNativeFocusOutlineEnabled = enabled;
+    }
+
+    isNativeFocusOutlineEnabled(): boolean {
+        return this._isNativeFocusOutlineEnabled;
     }
 }
 

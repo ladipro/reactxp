@@ -451,6 +451,8 @@ export enum AccessibilityTrait {
     None
 }
 
+export interface FocusableComponent extends RX.FocusableComponent {}
+
 // When multiple components with autoFocus=true are mounting at the same time,
 // and/or multiple requestFocus() calls are happening during the same render cycle,
 // it is possible to specify a callback which will choose one from those multiple.

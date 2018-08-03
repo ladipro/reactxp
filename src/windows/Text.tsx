@@ -52,6 +52,11 @@ export class Text extends TextBase implements React.ChildContextProvider<TextCon
         // Not used
     }
 
+    onBlur() {
+        // Focus Manager hook
+        // Not used
+    }
+
     getTabIndex(): number {
         // Not used
         return -1;
