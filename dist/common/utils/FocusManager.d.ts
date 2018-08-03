@@ -8,6 +8,8 @@
 */
 import React = require('react');
 import Types = require('../../common/Types');
+import Interfaces = require('../../common/Interfaces');
+import { FocusCandidateInternal } from '../../common/utils/AutoFocusHelper';
 export declare enum RestrictFocusType {
     Unrestricted = 0,
     Restricted = 1,
@@ -16,11 +18,11 @@ export declare enum RestrictFocusType {
 export interface FocusableInternal {
     focusableComponentId?: string;
 }
-export declare type FocusableComponentInternal = React.Component<any, any> & FocusableInternal;
+export declare type FocusableComponentInternal = React.Component<any, any> & FocusableInternal & Interfaces.FocusableComponent;
 export interface StoredFocusableComponent {
     id: string;
     numericId: number;
-    component: FocusableComponentInternal;
+    component: FocusableComponentInternal & Interfaces.FocusableComponent;
     onFocus: () => void;
     accessibleOnly: boolean;
     restricted: boolean;
@@ -28,6 +30,7 @@ export interface StoredFocusableComponent {
     limitedCountAccessible: number;
     removed?: boolean;
     callbacks?: FocusableComponentStateCallback[];
+    runAfterArbitrationId?: number;
 }
 export declare type FocusableComponentStateCallback = (restrictedOrLimited: boolean) => void;
 export declare type FocusManagerRestrictionStateCallback = (restricted: RestrictFocusType) => void;
@@ -41,8 +44,8 @@ export declare abstract class FocusManager {
         [id: string]: StoredFocusableComponent;
     };
     protected static _skipFocusCheck: boolean;
-    protected static _resetFocusTimer: number | undefined;
     private _parent;
+    private _rootView;
     private _isFocusLimited;
     private _currentRestrictType;
     private _prevFocusedComponent;
@@ -50,16 +53,16 @@ export declare abstract class FocusManager {
         [id: string]: boolean;
     };
     private _restrictionStateCallback;
-    constructor(parent: FocusManager | undefined);
+    constructor(parent: FocusManager | undefined, rootView?: any);
     protected abstract addFocusListenerOnComponent(component: FocusableComponentInternal, onFocus: () => void): void;
     protected abstract removeFocusListenerFromComponent(component: FocusableComponentInternal, onFocus: () => void): void;
     protected abstract focusComponent(component: FocusableComponentInternal): boolean;
-    protected abstract resetFocus(focusFirstWhenNavigatingWithKeyboard: boolean): void;
+    protected abstract resetFocus(focusFirstWhenNavigatingWithKeyboard: boolean, callback?: () => void): void;
     protected abstract _updateComponentFocusRestriction(storedComponent: StoredFocusableComponent): void;
     addFocusableComponent(component: FocusableComponentInternal, accessibleOnly?: boolean): void;
     removeFocusableComponent(component: FocusableComponentInternal): void;
-    restrictFocusWithin(restrictType: RestrictFocusType, noFocusReset?: boolean): void;
-    removeFocusRestriction(): void;
+    restrictFocusWithin(restrictType: RestrictFocusType, noFocusReset?: boolean, callback?: () => void): void;
+    removeFocusRestriction(callback?: () => void): void;
     limitFocusWithin(limitType: Types.LimitFocusType): void;
     removeFocusLimitation(): void;
     release(): void;
@@ -72,6 +75,11 @@ export declare abstract class FocusManager {
     protected static _callFocusableComponentStateChangeCallbacks(storedComponent: StoredFocusableComponent, restrictedOrLimited: boolean): void;
     private _removeFocusRestriction;
     private static _clearRestoreRestrictionTimeout;
+    protected static _isComponentAvailable(storedComponent: StoredFocusableComponent): boolean;
+    protected static _getFirstFocusable(last?: boolean, parent?: FocusManager): StoredFocusableComponent | undefined;
+    static _sortFocusableComponentsByAppearance(components: StoredFocusableComponent[]): void;
+    static sortAndFilterAutoFocusCandidates(candidates: FocusCandidateInternal[]): FocusCandidateInternal[];
+    protected static _requestFocusFirst(last?: boolean): void;
 }
 export declare function applyFocusableComponentMixin(Component: any, isConditionallyFocusable?: Function, accessibleOnly?: boolean): void;
 export default FocusManager;

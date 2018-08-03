@@ -52,6 +52,10 @@ var Text = /** @class */ (function (_super) {
         // Focus Manager hook
         // Not used
     };
+    Text.prototype.onBlur = function () {
+        // Focus Manager hook
+        // Not used
+    };
     Text.prototype.getTabIndex = function () {
         // Not used
         return -1;

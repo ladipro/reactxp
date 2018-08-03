@@ -18,7 +18,9 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var subscribableevent_1 = require("subscribableevent");
 var FocusManager_1 = require("../../common/utils/FocusManager");
+var AutoFocusHelper_1 = require("../../common/utils/AutoFocusHelper");
 var AppConfig_1 = require("../../common/AppConfig");
 var Platform_1 = require("../../native-common/Platform");
 var Timers_1 = require("../../common/utils/Timers");
@@ -35,8 +37,8 @@ var OverrideType;
 })(OverrideType = exports.OverrideType || (exports.OverrideType = {}));
 var FocusManager = /** @class */ (function (_super) {
     __extends(FocusManager, _super);
-    function FocusManager(parent) {
-        return _super.call(this, parent) || this;
+    function FocusManager() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     FocusManager.prototype.addFocusListenerOnComponent = function (component, onFocus) {
         // We intercept the "onFocus" all the focusable elements have to have
@@ -47,73 +49,36 @@ var FocusManager = /** @class */ (function (_super) {
     };
     FocusManager.prototype.focusComponent = function (component) {
         if (component && component.focus) {
+            FocusManager.setLastFocusedProgrammatically(component);
             component.focus();
             return true;
         }
         return false;
     };
-    FocusManager.focusFirst = function () {
-        var focusable = Object.keys(FocusManager._allFocusableComponents)
-            .map(function (componentId) { return FocusManager._allFocusableComponents[componentId]; })
-            .filter(function (storedComponent) {
-            return !storedComponent.accessibleOnly &&
-                !storedComponent.removed &&
-                !storedComponent.restricted &&
-                !storedComponent.limitedCount &&
-                !storedComponent.limitedCountAccessible;
-        });
-        if (focusable.length) {
-            focusable.sort(function (a, b) {
-                // This function does its best, but contrary to DOM-land we have no idea on where the native components
-                // ended up on screen, unless some expensive measuring is done on them.
-                // So we defer to less than optimal "add focusable component" order. A lot of factors (absolute positioning,
-                // instance replacements, etc.) can alter the correctness of this method, but I see no other way.
-                if (a === b) {
-                    return 0;
-                }
-                if (a.numericId < b.numericId) {
-                    return -1;
-                }
-                else {
-                    return 1;
-                }
-            });
-            var fc = focusable[0].component;
-            if (fc && fc.focus) {
-                fc.focus();
-            }
-        }
-    };
-    FocusManager.prototype.resetFocus = function (focusFirstWhenNavigatingWithKeyboard) {
-        if (FocusManager._resetFocusTimer) {
-            clearTimeout(FocusManager._resetFocusTimer);
-            FocusManager._resetFocusTimer = undefined;
+    FocusManager.prototype.resetFocus = function (focusFirstWhenNavigatingWithKeyboard, callback) {
+        if (FocusManager._runAfterArbitrationId) {
+            AutoFocusHelper_1.cancelRunAfterArbitration(FocusManager._runAfterArbitrationId);
+            FocusManager._runAfterArbitrationId = undefined;
         }
         if (UserInterface_1.default.isNavigatingWithKeyboard() && focusFirstWhenNavigatingWithKeyboard) {
             // When we're in the keyboard navigation mode, we want to have the
             // first focusable component to be focused straight away, without the
             // necessity to press Tab.
-            // Defer the focusing to let the view finish its initialization and to allow for manual focus setting (if any)
-            // to be processed (the asynchronous nature of focus->onFocus path requires a delay)
-            FocusManager._resetFocusTimer = Timers_1.default.setTimeout(function () {
-                FocusManager._resetFocusTimer = undefined;
-                // Check if the currently focused component is without limit/restriction.
-                // We skip setting focus on "first" component in that case because:
-                // - focusFirst has its limits, to say it gently
-                // - We ended up in resetFocus for a reason that is not true anymore (mostly because focus was set manually)
-                var storedComponent = FocusManager._currentFocusedComponent;
-                if (!storedComponent ||
-                    storedComponent.accessibleOnly ||
-                    storedComponent.removed ||
-                    storedComponent.restricted ||
-                    (storedComponent.limitedCount > 0) ||
-                    (storedComponent.limitedCountAccessible > 0)) {
-                    FocusManager.focusFirst();
-                }
-            }, 500);
+            FocusManager._requestFocusFirst();
+            if (callback) {
+                FocusManager._runAfterArbitrationId = AutoFocusHelper_1.runAfterArbitration(function () {
+                    // Making sure to run after all autoFocus logic is done.
+                    FocusManager._runAfterArbitrationId = undefined;
+                    callback();
+                });
+            }
         }
     };
     FocusManager.prototype._updateComponentFocusRestriction = function (storedComponent) {
+        if (storedComponent.runAfterArbitrationId) {
+            AutoFocusHelper_1.cancelRunAfterArbitration(storedComponent.runAfterArbitrationId);
+            storedComponent.runAfterArbitrationId = undefined;
+        }
         var newOverrideType = OverrideType.None;
         if (storedComponent.restricted || (storedComponent.limitedCount > 0)) {
             newOverrideType = OverrideType.Limited;
@@ -150,6 +115,30 @@ var FocusManager = /** @class */ (function (_super) {
         // Refresh the native view
         updateNativeAccessibilityProps(component);
     };
+    FocusManager.setLastFocusedProgrammatically = function (component) {
+        this._lastFocusedProgrammatically = component;
+    };
+    FocusManager.getLastFocusedProgrammatically = function (reset) {
+        var ret = FocusManager._lastFocusedProgrammatically;
+        if (ret && reset) {
+            FocusManager._lastFocusedProgrammatically = undefined;
+        }
+        return ret;
+    };
+    FocusManager.getFocusableComponentWrapped = function (component) {
+        var storedComponent = component.focusableComponentId
+            ? FocusManager._allFocusableComponents[component.focusableComponentId]
+            : undefined;
+        if (storedComponent) {
+            return {
+                component: component,
+                isAvailable: function () { return !storedComponent.removed && !storedComponent.restricted; }
+            };
+        }
+        return undefined;
+    };
+    FocusManager.onComponentFocus = new subscribableevent_1.default();
+    FocusManager.onComponentBlur = new subscribableevent_1.default();
     return FocusManager;
 }(FocusManager_1.FocusManager));
 exports.FocusManager = FocusManager;
@@ -184,6 +173,10 @@ function applyFocusableComponentMixin(Component, isConditionallyFocusable, acces
     if (!accessibleOnly) {
         // Hook 'onFocus'
         inheritMethod('onFocus', function (origCallback) {
+            var wrapped = FocusManager.getFocusableComponentWrapped(this);
+            if (wrapped) {
+                FocusManager.onComponentFocus.fire(wrapped);
+            }
             if (this.onFocusSink) {
                 this.onFocusSink();
             }
@@ -191,6 +184,14 @@ function applyFocusableComponentMixin(Component, isConditionallyFocusable, acces
                 if (AppConfig_1.default.isDevelopmentMode()) {
                     console.error('FocusableComponentMixin: onFocusSink doesn\'t exist!');
                 }
+            }
+            origCallback.call(this);
+        });
+        // Hook 'onBlur'
+        inheritMethod('onBlur', function (origCallback) {
+            var wrapped = FocusManager.getFocusableComponentWrapped(this);
+            if (wrapped) {
+                FocusManager.onComponentBlur.fire(wrapped);
             }
             origCallback.call(this);
         });
@@ -218,6 +219,7 @@ function applyFocusableComponentMixin(Component, isConditionallyFocusable, acces
             // We try to simulate the right behavior through a trick.
             inheritMethod('focus', function (origCallback) {
                 var _this = this;
+                FocusManager.setLastFocusedProgrammatically(this);
                 var tabIndex = this.getTabIndex();
                 // Check effective tabIndex
                 if (tabIndex !== undefined && tabIndex < 0) {

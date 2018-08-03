@@ -56,7 +56,7 @@ export declare class View extends ViewCommon implements React.ChildContextProvid
     blur(): void;
     getChildContext(): ViewContext;
     private _isHidden;
-    setFocusRestricted(restricted: boolean): void;
+    setFocusRestricted(restricted: boolean, callback?: () => void): void;
     setFocusLimited(limited: boolean): void;
     private _focusRestrictionCallback;
     setNativeProps(nativeProps: RN.ViewProps): void;
@@ -66,6 +66,7 @@ export declare class View extends ViewCommon implements React.ChildContextProvid
     private _onFocus;
     private _onBlur;
     onFocus(): void;
+    onBlur(): void;
     getTabIndex(): number | undefined;
     getImportantForAccessibility(): ImportantForAccessibilityValue | undefined;
     updateNativeAccessibilityProps(): void;

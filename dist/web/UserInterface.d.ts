@@ -13,6 +13,7 @@ import RX = require('../common/Interfaces');
 import Types = require('../common/Types');
 export declare class UserInterface extends RX.UserInterface {
     private _isNavigatingWithKeyboard;
+    private _isNativeFocusOutlineEnabled;
     constructor();
     measureLayoutRelativeToWindow(component: React.Component<any, any>): SyncTasks.Promise<Types.LayoutInfo>;
     measureLayoutRelativeToAncestor(component: React.Component<any, any>, ancestor: React.Component<any, any>): SyncTasks.Promise<Types.LayoutInfo>;
@@ -30,6 +31,8 @@ export declare class UserInterface extends RX.UserInterface {
     evaluateTouchLatency(e: Types.MouseEvent): void;
     isNavigatingWithKeyboard(): boolean;
     private _keyboardNavigationStateChanged;
+    setNativeFocusOutlineEnabled(enabled: boolean): void;
+    isNativeFocusOutlineEnabled(): boolean;
 }
 declare const _default: UserInterface;
 export default _default;

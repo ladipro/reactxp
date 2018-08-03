@@ -285,6 +285,8 @@ export declare enum AccessibilityTrait {
     Switch = 35,
     None = 36
 }
+export interface FocusableComponent extends RX.FocusableComponent {
+}
 export declare type FocusArbitrator = (candidates: FocusCandidate[]) => FocusCandidate | undefined;
 export interface FocusCandidate {
     component: RX.FocusableComponent;

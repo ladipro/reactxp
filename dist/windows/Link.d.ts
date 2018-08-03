@@ -40,7 +40,9 @@ export declare class Link extends LinkBase<LinkState> implements FocusManagerFoc
     private _onKeyDown;
     private _onKeyUp;
     private _onFocus;
+    private _onBlur;
     onFocus(): void;
+    onBlur(): void;
     getTabIndex(): number | undefined;
     getImportantForAccessibility(): ImportantForAccessibilityValue | undefined;
     updateNativeAccessibilityProps(): void;

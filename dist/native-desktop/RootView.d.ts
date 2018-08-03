@@ -9,12 +9,18 @@
 import React = require('react');
 import RN = require('react-native');
 import { RootView as RootViewBase, RootViewUsingProps as RootViewUsingPropsBase, BaseRootViewProps, RootViewPropsWithMainViewType, RootViewState, BaseRootView } from '../native-common/RootView';
-import FocusManager from './utils/FocusManager';
+import { FocusableComponentWrapped, FocusManager } from './utils/FocusManager';
 declare const RootViewUsingStore: {
     new (...args: any[]): {
         _focusManager: FocusManager;
         _keyboardHandlerInstalled: boolean;
         _isNavigatingWithKeyboardUpateTimer: number | undefined;
+        _shouldEnableKeyboardNavigationModeOnFocus: boolean;
+        _prevFocusedComponent: FocusableComponentWrapped | undefined;
+        _updateKeyboardNavigationModeOnFocusTimer: number | undefined;
+        componentDidMount(): void;
+        componentWillUnmount(): void;
+        _onComponentFocus: (wrapped: FocusableComponentWrapped) => void;
         _onTouchStartCapture: (e: RN.NativeSyntheticEvent<any>) => void;
         _onKeyDownCapture: (e: RN.NativeSyntheticEvent<any>) => void;
         _updateKeyboardNavigationState(isNavigatingWithKeyboard: boolean): void;
@@ -44,6 +50,12 @@ declare const RootViewUsingProps: {
         _focusManager: FocusManager;
         _keyboardHandlerInstalled: boolean;
         _isNavigatingWithKeyboardUpateTimer: number | undefined;
+        _shouldEnableKeyboardNavigationModeOnFocus: boolean;
+        _prevFocusedComponent: FocusableComponentWrapped | undefined;
+        _updateKeyboardNavigationModeOnFocusTimer: number | undefined;
+        componentDidMount(): void;
+        componentWillUnmount(): void;
+        _onComponentFocus: (wrapped: FocusableComponentWrapped) => void;
         _onTouchStartCapture: (e: RN.NativeSyntheticEvent<any>) => void;
         _onKeyDownCapture: (e: RN.NativeSyntheticEvent<any>) => void;
         _updateKeyboardNavigationState(isNavigatingWithKeyboard: boolean): void;

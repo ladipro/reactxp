@@ -12,9 +12,13 @@ import { ImportantForAccessibilityValue } from '../native-common/AccessibilityUt
 import { FocusManagerFocusableComponent } from '../native-desktop/utils/FocusManager';
 import { TextInput as TextInputBase } from '../native-common/TextInput';
 export declare class TextInput extends TextInputBase implements FocusManagerFocusableComponent {
+    private _onFocusHandler;
+    private _onBlurHandler;
     protected _render(props: RN.TextInputProps, onMount: (textInput: any) => void): JSX.Element;
     private _onFocusEx;
+    private _onBlurEx;
     onFocus(): void;
+    onBlur(): void;
     getTabIndex(): number;
     getImportantForAccessibility(): ImportantForAccessibilityValue | undefined;
     updateNativeAccessibilityProps(): void;

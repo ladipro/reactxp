@@ -20,6 +20,7 @@ export declare class Text extends TextBase implements React.ChildContextProvider
     requestFocus(): void;
     getChildContext(): TextContext;
     onFocus(): void;
+    onBlur(): void;
     getTabIndex(): number;
     getImportantForAccessibility(): ImportantForAccessibilityValue | undefined;
     updateNativeAccessibilityProps(): void;

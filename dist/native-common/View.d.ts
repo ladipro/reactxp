@@ -70,7 +70,7 @@ export declare class View extends ViewBase<Types.ViewProps, Types.Stateless> {
         right: number;
         bottom: number;
     };
-    setFocusRestricted(restricted: boolean): void;
+    setFocusRestricted(restricted: boolean, callback?: () => void): void;
     setFocusLimited(limited: boolean): void;
     blur(): void;
     requestFocus(): void;

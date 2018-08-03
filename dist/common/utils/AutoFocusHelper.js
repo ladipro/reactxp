@@ -10,10 +10,15 @@
 */
 Object.defineProperty(exports, "__esModule", { value: true });
 var Timers_1 = require("./Timers");
+var _arbitrateTimeout = 100;
 var _sortAndFilter;
 var _autoFocusTimer;
 var _lastFocusArbitratorProviderId = 0;
-var rootFocusArbitratorProvider;
+var _rootFocusArbitratorProvider;
+var _requestFocusQueue = [];
+var _runAfterArbitrationTimer;
+var _runAfterArbitrationCallbacks = [];
+var _runAfterArbitrationLastId = 0;
 var FocusCandidateType;
 (function (FocusCandidateType) {
     FocusCandidateType[FocusCandidateType["Focus"] = 1] = "Focus";
@@ -23,13 +28,41 @@ function setSortAndFilterFunc(sortAndFilter) {
     _sortAndFilter = sortAndFilter;
 }
 exports.setSortAndFilterFunc = setSortAndFilterFunc;
+function _runAfterArbitration() {
+    if (_runAfterArbitrationTimer) {
+        Timers_1.default.clearTimeout(_runAfterArbitrationTimer);
+        _runAfterArbitrationTimer = undefined;
+    }
+    if (!_autoFocusTimer) {
+        _runAfterArbitrationTimer = Timers_1.default.setTimeout(function () {
+            _runAfterArbitrationTimer = undefined;
+            if (_runAfterArbitrationCallbacks.length) {
+                _runAfterArbitrationCallbacks.forEach(function (item) { return item.callback(); });
+                _runAfterArbitrationCallbacks = [];
+            }
+        }, _arbitrateTimeout);
+    }
+}
+function runAfterArbitration(callback) {
+    _runAfterArbitrationCallbacks.push({
+        id: ++_runAfterArbitrationLastId,
+        callback: callback
+    });
+    _runAfterArbitration();
+    return _runAfterArbitrationLastId;
+}
+exports.runAfterArbitration = runAfterArbitration;
+function cancelRunAfterArbitration(id) {
+    _runAfterArbitrationCallbacks = _runAfterArbitrationCallbacks.filter(function (item) { return item.id !== id; });
+}
+exports.cancelRunAfterArbitration = cancelRunAfterArbitration;
 var FocusArbitratorProvider = /** @class */ (function () {
     function FocusArbitratorProvider(view, arbitrator) {
         this._candidates = [];
         this._pendingChildren = {};
         this._id = ++_lastFocusArbitratorProviderId;
         this._parentArbitratorProvider = view
-            ? ((view.context && view.context.focusArbitrator) || rootFocusArbitratorProvider)
+            ? ((view.context && view.context.focusArbitrator) || _rootFocusArbitratorProvider)
             : undefined;
         this._arbitratorCallback = arbitrator;
     }
@@ -107,22 +140,36 @@ var FocusArbitratorProvider = /** @class */ (function () {
     };
     FocusArbitratorProvider.requestFocus = function (component, focus, isAvailable, type) {
         if (_autoFocusTimer) {
-            clearTimeout(_autoFocusTimer);
+            Timers_1.default.clearTimeout(_autoFocusTimer);
         }
-        var focusArbitratorProvider = ((component._focusArbitratorProvider instanceof FocusArbitratorProvider) &&
-            component._focusArbitratorProvider) ||
-            (component.context && component.context.focusArbitrator) ||
-            rootFocusArbitratorProvider;
-        focusArbitratorProvider._requestFocus(component, focus, isAvailable, type || FocusCandidateType.Focus);
+        if (_runAfterArbitrationTimer) {
+            Timers_1.default.clearTimeout(_runAfterArbitrationTimer);
+            _runAfterArbitrationTimer = undefined;
+        }
+        _requestFocusQueue.push(function () {
+            var c = typeof component === 'function' ? component() : component;
+            if (c) {
+                var focusArbitratorProvider = ((c._focusArbitratorProvider instanceof FocusArbitratorProvider) &&
+                    c._focusArbitratorProvider) ||
+                    (c.context && c.context.focusArbitrator) ||
+                    _rootFocusArbitratorProvider;
+                focusArbitratorProvider._requestFocus(c, focus, isAvailable, type || FocusCandidateType.Focus);
+            }
+        });
         _autoFocusTimer = Timers_1.default.setTimeout(function () {
             _autoFocusTimer = undefined;
-            var candidate = rootFocusArbitratorProvider._arbitrate();
+            for (var i = 0; i < _requestFocusQueue.length; i++) {
+                _requestFocusQueue[i]();
+            }
+            _requestFocusQueue = [];
+            var candidate = _rootFocusArbitratorProvider._arbitrate();
             if (candidate) {
                 candidate.focus();
             }
-        }, 0);
+            _runAfterArbitration();
+        }, _arbitrateTimeout);
     };
     return FocusArbitratorProvider;
 }());
 exports.FocusArbitratorProvider = FocusArbitratorProvider;
-rootFocusArbitratorProvider = new FocusArbitratorProvider();
+_rootFocusArbitratorProvider = new FocusArbitratorProvider();

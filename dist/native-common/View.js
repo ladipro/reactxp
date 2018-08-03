@@ -435,7 +435,7 @@ var View = /** @class */ (function (_super) {
     View.prototype.touchableGetPressRectOffset = function () {
         return { top: 20, left: 20, right: 20, bottom: 100 };
     };
-    View.prototype.setFocusRestricted = function (restricted) {
+    View.prototype.setFocusRestricted = function (restricted, callback) {
         // Nothing to do.
     };
     View.prototype.setFocusLimited = function (limited) {

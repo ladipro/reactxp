@@ -27,7 +27,7 @@ export declare abstract class AnimatedText extends AnimatedComponent<Types.Anima
 export declare abstract class AnimatedTextInput extends AnimatedComponent<Types.AnimatedTextInputProps, Types.Stateless> {
 }
 export declare abstract class AnimatedView extends AnimatedComponent<Types.AnimatedViewProps, Types.Stateless> implements FocusableComponent {
-    abstract setFocusRestricted(restricted: boolean): void;
+    abstract setFocusRestricted(restricted: boolean, callback?: () => void): void;
     abstract setFocusLimited(limited: boolean): void;
     abstract focus(): void;
     abstract requestFocus(): void;
@@ -55,7 +55,10 @@ export declare abstract class UserInterface {
     abstract enableTouchLatencyEvents(latencyThresholdMs: number): void;
     touchLatencyEvent: SubscribableEvent<(observedLatencyMs: number) => void>;
     abstract isNavigatingWithKeyboard(): boolean;
+    abstract isNativeFocusOutlineEnabled(): boolean;
+    abstract setNativeFocusOutlineEnabled(enabled: boolean): void;
     keyboardNavigationEvent: SubscribableEvent<(isNavigatingWithKeyboard: boolean) => void>;
+    nativeFocusOutlineEnabledEvent: SubscribableEvent<(isNativeFocusOutlineEnabled: boolean) => void>;
 }
 export declare abstract class Modal {
     abstract isDisplayed(modalId?: string): boolean;
@@ -211,7 +214,7 @@ export declare abstract class UserPresence {
 export declare abstract class ViewBase<P, S> extends React.Component<P, S> {
 }
 export declare abstract class View extends ViewBase<Types.ViewProps, any> implements FocusableComponent {
-    abstract setFocusRestricted(restricted: boolean): void;
+    abstract setFocusRestricted(restricted: boolean, callback?: () => void): void;
     abstract setFocusLimited(limited: boolean): void;
     abstract focus(): void;
     abstract requestFocus(): void;

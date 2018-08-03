@@ -39,7 +39,7 @@ export declare class View extends ViewBase<Types.ViewProps, Types.Stateless> {
     protected _getContainer(): HTMLElement | null;
     private _isHidden;
     private _updateFocusArbitratorProvider;
-    setFocusRestricted(restricted: boolean): void;
+    setFocusRestricted(restricted: boolean, callback?: () => void): void;
     setFocusLimited(limited: boolean): void;
     render(): React.ReactElement<any>;
     componentWillReceiveProps(nextProps: Types.ViewProps): void;

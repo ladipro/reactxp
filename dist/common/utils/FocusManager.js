@@ -12,6 +12,7 @@ var PropTypes = require("prop-types");
 var AppConfig_1 = require("../../common/AppConfig");
 var Timers_1 = require("./Timers");
 var Types = require("../../common/Types");
+var AutoFocusHelper_1 = require("../../common/utils/AutoFocusHelper");
 var _lastComponentId = 0;
 var RestrictFocusType;
 (function (RestrictFocusType) {
@@ -25,11 +26,12 @@ var RestrictFocusType;
     RestrictFocusType[RestrictFocusType["RestrictedFocusFirst"] = 2] = "RestrictedFocusFirst";
 })(RestrictFocusType = exports.RestrictFocusType || (exports.RestrictFocusType = {}));
 var FocusManager = /** @class */ (function () {
-    function FocusManager(parent) {
+    function FocusManager(parent, rootView) {
         this._isFocusLimited = Types.LimitFocusType.Unlimited;
         this._currentRestrictType = RestrictFocusType.Unrestricted;
         this._myFocusableComponentIds = {};
         this._parent = parent;
+        this._rootView = rootView;
     }
     // Whenever the focusable element is mounted, we let the application
     // know so that FocusManager could account for this element during the
@@ -95,7 +97,7 @@ var FocusManager = /** @class */ (function () {
             delete component.focusableComponentId;
         }
     };
-    FocusManager.prototype.restrictFocusWithin = function (restrictType, noFocusReset) {
+    FocusManager.prototype.restrictFocusWithin = function (restrictType, noFocusReset, callback) {
         var _this = this;
         // Limit the focus received by the keyboard navigation to all
         // the descendant focusable elements by setting tabIndex of all
@@ -113,21 +115,35 @@ var FocusManager = /** @class */ (function () {
         FocusManager._clearRestoreRestrictionTimeout();
         FocusManager._restrictionStack.push(this);
         FocusManager._currentRestrictionOwner = this;
-        if (!noFocusReset) {
-            this.resetFocus(restrictType === RestrictFocusType.RestrictedFocusFirst);
-        }
         Object.keys(FocusManager._allFocusableComponents).forEach(function (componentId) {
             if (!(componentId in _this._myFocusableComponentIds)) {
-                var storedComponent = FocusManager._allFocusableComponents[componentId];
-                storedComponent.restricted = true;
-                _this._updateComponentFocusRestriction(storedComponent);
+                var storedComponent_1 = FocusManager._allFocusableComponents[componentId];
+                storedComponent_1.restricted = true;
+                if (storedComponent_1 === _this._prevFocusedComponent) {
+                    if (storedComponent_1.runAfterArbitrationId) {
+                        AutoFocusHelper_1.cancelRunAfterArbitration(storedComponent_1.runAfterArbitrationId);
+                    }
+                    storedComponent_1.runAfterArbitrationId = AutoFocusHelper_1.runAfterArbitration(function () {
+                        storedComponent_1.runAfterArbitrationId = undefined;
+                        _this._updateComponentFocusRestriction(storedComponent_1);
+                    });
+                }
+                else {
+                    _this._updateComponentFocusRestriction(storedComponent_1);
+                }
             }
         });
+        if (!noFocusReset) {
+            this.resetFocus(restrictType === RestrictFocusType.RestrictedFocusFirst, callback);
+        }
+        else if (callback) {
+            callback();
+        }
         if (this._restrictionStateCallback) {
             this._restrictionStateCallback(restrictType);
         }
     };
-    FocusManager.prototype.removeFocusRestriction = function () {
+    FocusManager.prototype.removeFocusRestriction = function (callback) {
         var _this = this;
         // Restore the focus to the previous view with restrictFocusWithin or
         // remove the restriction if there is no such view.
@@ -138,7 +154,6 @@ var FocusManager = /** @class */ (function () {
             FocusManager._skipFocusCheck = true;
             var prevFocusedComponent_1 = this._prevFocusedComponent;
             this._prevFocusedComponent = undefined;
-            this._removeFocusRestriction();
             FocusManager._currentRestrictionOwner = undefined;
             if (this._restrictionStateCallback) {
                 this._restrictionStateCallback(RestrictFocusType.Unrestricted);
@@ -148,9 +163,15 @@ var FocusManager = /** @class */ (function () {
             // showing a modal after a popup).
             FocusManager._clearRestoreRestrictionTimeout();
             FocusManager._pendingPrevFocusedComponent = prevFocusedComponent_1;
+            if (prevFocusedComponent_1) {
+                // Making the previously focused component available right away.
+                prevFocusedComponent_1.restricted = false;
+                this._updateComponentFocusRestriction(prevFocusedComponent_1);
+            }
             FocusManager._restoreRestrictionTimer = Timers_1.default.setTimeout(function () {
                 FocusManager._restoreRestrictionTimer = undefined;
                 FocusManager._pendingPrevFocusedComponent = undefined;
+                _this._removeFocusRestriction();
                 var prevRestrictionOwner = FocusManager._restrictionStack.pop();
                 var needsFocusReset = true;
                 var currentFocusedComponent = FocusManager._currentFocusedComponent;
@@ -172,10 +193,13 @@ var FocusManager = /** @class */ (function () {
                     needsFocusReset = !_this.focusComponent(prevFocusedComponent_1.component);
                 }
                 if (prevRestrictionOwner) {
-                    prevRestrictionOwner.restrictFocusWithin(prevRestrictionOwner._currentRestrictType, !needsFocusReset);
+                    prevRestrictionOwner.restrictFocusWithin(prevRestrictionOwner._currentRestrictType, !needsFocusReset, callback);
                 }
                 else if (needsFocusReset) {
-                    _this.resetFocus(_this._currentRestrictType === RestrictFocusType.RestrictedFocusFirst);
+                    _this.resetFocus(_this._currentRestrictType === RestrictFocusType.RestrictedFocusFirst, callback);
+                }
+                else if (callback) {
+                    callback();
                 }
             }, 100);
         }
@@ -277,6 +301,133 @@ var FocusManager = /** @class */ (function () {
             FocusManager._restoreRestrictionTimer = undefined;
             FocusManager._pendingPrevFocusedComponent = undefined;
         }
+    };
+    FocusManager._isComponentAvailable = function (storedComponent) {
+        return !storedComponent.removed &&
+            !storedComponent.restricted &&
+            storedComponent.limitedCount === 0 &&
+            storedComponent.limitedCountAccessible === 0;
+    };
+    FocusManager._getFirstFocusable = function (last, parent) {
+        var focusables = Object.keys(FocusManager._allFocusableComponents)
+            .filter(function (componentId) { return !parent || (componentId in parent._myFocusableComponentIds); })
+            .map(function (componentId) { return FocusManager._allFocusableComponents[componentId]; })
+            .filter(FocusManager._isComponentAvailable);
+        FocusManager._sortFocusableComponentsByAppearance(focusables);
+        focusables = focusables.filter(function (storedComponent) {
+            var component = storedComponent.component;
+            return component.focus && component.props && ((component.props.tabIndex || 0) >= 0) && !component.props.disabled;
+        });
+        if (focusables.length) {
+            return focusables[last ? focusables.length - 1 : 0];
+        }
+        return undefined;
+    };
+    FocusManager._sortFocusableComponentsByAppearance = function (components) {
+        // This function uses private React API to traverse the rendered components tree to get
+        // the notion of where the component presents in the application structure.
+        // We have a build time test to validate it works in case the API changes.
+        if (components.length <= 1) {
+            return;
+        }
+        var tmp = components[0].component;
+        var focusManager = tmp && tmp.context && tmp.context.focusManager;
+        var rootView;
+        while (focusManager) {
+            if (focusManager._rootView) {
+                rootView = focusManager._rootView;
+            }
+            focusManager = focusManager._parent;
+        }
+        var rootViewInternalInstance = rootView && (rootView._reactInternalFiber || rootView._reactInternalInstance);
+        if (!rootViewInternalInstance && AppConfig_1.default.isDevelopmentMode()) {
+            console.error('FocusManager: cannot find root view');
+            return;
+        }
+        var componentOrderMap = {};
+        var index = 0;
+        traverse(rootViewInternalInstance);
+        components.sort(function (a, b) {
+            if (a.component === b.component) {
+                return 0;
+            }
+            var aId = a.component.focusableComponentId;
+            var bId = b.component.focusableComponentId;
+            var aIndex = aId && componentOrderMap[aId];
+            var bIndex = bId && componentOrderMap[bId];
+            // Both aIndex and bIndex should be defined after the tree is traversed,
+            // but just in case something is really wrong, we're putting all unknown
+            // components to the end of the array.
+            if (!aIndex) {
+                return 1;
+            }
+            else if (!bIndex) {
+                return -1;
+            }
+            return aIndex < bIndex ? -1 : 1;
+        });
+        function traverse(internalInstance) {
+            // Supporting both old API and the new fiber API.
+            var ref = internalInstance.stateNode || internalInstance._instance;
+            if (ref && ref.focusableComponentId) {
+                componentOrderMap[ref.focusableComponentId] = ++index;
+            }
+            // New React fiber API.
+            if (internalInstance.child) {
+                traverse(internalInstance.child);
+            }
+            if (internalInstance.sibling) {
+                traverse(internalInstance.sibling);
+            }
+            // Old React API.
+            var c = internalInstance._renderedComponent;
+            if (c) {
+                traverse(c);
+            }
+            c = internalInstance._renderedChildren;
+            if (c) {
+                Object.keys(c).forEach(function (key) {
+                    var child = c[key];
+                    if (child) {
+                        traverse(child);
+                    }
+                });
+            }
+        }
+    };
+    FocusManager.sortAndFilterAutoFocusCandidates = function (candidates) {
+        var filtered = [];
+        for (var i = 0; i < candidates.length; i++) {
+            var candidate = candidates[i];
+            var id = candidate.component.focusableComponentId;
+            if (id) {
+                var storedComponent = FocusManager._allFocusableComponents[id];
+                if (storedComponent && !storedComponent.__candidate) {
+                    if (!storedComponent.removed && (storedComponent.limitedCount === 0) &&
+                        (storedComponent.limitedCountAccessible === 0)) {
+                        filtered.push(storedComponent);
+                        storedComponent.__candidate = candidate;
+                    }
+                }
+            }
+        }
+        FocusManager._sortFocusableComponentsByAppearance(filtered);
+        return filtered.map(function (storedComponent) {
+            var candidate = storedComponent.__candidate;
+            delete storedComponent.__candidate;
+            return candidate;
+        });
+    };
+    FocusManager._requestFocusFirst = function (last) {
+        var first;
+        AutoFocusHelper_1.FocusArbitratorProvider.requestFocus(function () {
+            first = FocusManager._getFirstFocusable(last);
+            return first ? first.component : undefined;
+        }, function () {
+            if (first && first.component && first.component.focus) {
+                first.component.focus();
+            }
+        }, function () { return first ? FocusManager._isComponentAvailable(first) : false; }, AutoFocusHelper_1.FocusCandidateType.FocusFirst);
     };
     FocusManager._restrictionStack = [];
     FocusManager._allFocusableComponents = {};

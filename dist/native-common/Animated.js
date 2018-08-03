@@ -113,7 +113,7 @@ var AnimatedView = /** @class */ (function (_super) {
     function AnimatedView() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    AnimatedView.prototype.setFocusRestricted = function (restricted) {
+    AnimatedView.prototype.setFocusRestricted = function (restricted, callback) {
         // Nothing to do.
     };
     AnimatedView.prototype.setFocusLimited = function (limited) {
@@ -130,10 +130,10 @@ var FocusRestrictedAnimatedView = /** @class */ (function (_super) {
     function FocusRestrictedAnimatedView() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    FocusRestrictedAnimatedView.prototype.setFocusRestricted = function (restricted) {
+    FocusRestrictedAnimatedView.prototype.setFocusRestricted = function (restricted, callback) {
         var innerComponent = this._mountedComponent ? this._mountedComponent._component : undefined;
         if (innerComponent && innerComponent.setFocusRestricted) {
-            innerComponent.setFocusRestricted(restricted);
+            innerComponent.setFocusRestricted(restricted, callback);
         }
     };
     FocusRestrictedAnimatedView.prototype.setFocusLimited = function (limited) {

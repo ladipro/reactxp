@@ -212,7 +212,7 @@ var View = /** @class */ (function (_super) {
             delete this._focusArbitratorProvider;
         }
     };
-    View.prototype.setFocusRestricted = function (restricted) {
+    View.prototype.setFocusRestricted = function (restricted, callback) {
         if (!this._focusManager || !this.props.restrictFocusWithin) {
             if (AppConfig_1.default.isDevelopmentMode()) {
                 console.error('View: setFocusRestricted method requires restrictFocusWithin property to be set');
@@ -221,10 +221,10 @@ var View = /** @class */ (function (_super) {
         }
         if (!this._isHidden()) {
             if (restricted) {
-                this._focusManager.restrictFocusWithin(FocusManager_1.RestrictFocusType.RestrictedFocusFirst);
+                this._focusManager.restrictFocusWithin(FocusManager_1.RestrictFocusType.RestrictedFocusFirst, false, callback);
             }
             else {
-                this._focusManager.removeFocusRestriction();
+                this._focusManager.removeFocusRestriction(callback);
             }
         }
         this._isFocusRestricted = restricted;

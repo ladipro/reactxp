@@ -35,26 +35,37 @@ var TextInput_1 = require("../native-common/TextInput");
 var TextInput = /** @class */ (function (_super) {
     __extends(TextInput, _super);
     function TextInput() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this._onFocusEx = function (e) {
+            if (e.currentTarget === e.target) {
+                _this.onFocus();
+            }
+            if (_this._onFocusHandler) {
+                _this._onFocusHandler(e);
+            }
+        };
+        _this._onBlurEx = function (e) {
+            _this.onBlur();
+            if (_this._onBlurHandler) {
+                _this._onBlurHandler(e);
+            }
+        };
+        return _this;
     }
     TextInput.prototype._render = function (props, onMount) {
-        var _this = this;
+        this._onFocusHandler = props.onFocus;
+        this._onBlurHandler = props.onBlur;
         var extendedProps = {
             tabIndex: this.getTabIndex()
         };
-        return (React.createElement(RN.TextInput, __assign({}, props, extendedProps, { ref: onMount, importantForAccessibility: this.getImportantForAccessibility(), onFocus: function (e) { return _this._onFocusEx(e, props.onFocus); } })));
-    };
-    TextInput.prototype._onFocusEx = function (e, origHandler) {
-        if (e.currentTarget === e.target) {
-            this.onFocus();
-        }
-        if (origHandler) {
-            origHandler(e);
-        }
+        return (React.createElement(RN.TextInput, __assign({}, props, extendedProps, { ref: onMount, importantForAccessibility: this.getImportantForAccessibility(), onFocus: this._onFocusEx, onBlur: this._onBlurEx })));
     };
     // From FocusManagerFocusableComponent interface
     //
     TextInput.prototype.onFocus = function () {
+        // Focus Manager hook
+    };
+    TextInput.prototype.onBlur = function () {
         // Focus Manager hook
     };
     TextInput.prototype.getTabIndex = function () {

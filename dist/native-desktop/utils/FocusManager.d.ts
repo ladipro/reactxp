@@ -6,6 +6,8 @@
 *
 * Manages focusable elements for better keyboard navigation (RN desktop version)
 */
+import SubscribableEvent from 'subscribableevent';
+import { FocusableComponent } from '../../common/Interfaces';
 import { FocusManager as FocusManagerBase, FocusableComponentInternal as FocusableComponentInternalBase, StoredFocusableComponent as StoredFocusableComponentBase } from '../../common/utils/FocusManager';
 import { ImportantForAccessibilityValue } from '../../native-common/AccessibilityUtil';
 import { FocusableComponentStateCallback } from '../../common/utils/FocusManager';
@@ -22,6 +24,7 @@ export interface FocusManagerFocusableComponent {
     getTabIndex(): number | undefined;
     getImportantForAccessibility(): ImportantForAccessibilityValue | undefined;
     onFocus(): void;
+    onBlur(): void;
     focus(): void;
     updateNativeAccessibilityProps(): void;
 }
@@ -32,15 +35,24 @@ export interface FocusableComponentInternal extends FocusManagerFocusableCompone
     importantForAccessibilityOverride?: string;
     onFocusSink?: () => void;
 }
+export interface FocusableComponentWrapped {
+    component: FocusableComponent;
+    isAvailable: () => boolean;
+}
 export declare class FocusManager extends FocusManagerBase {
-    constructor(parent: FocusManager | undefined);
+    static onComponentFocus: SubscribableEvent<(component: FocusableComponentWrapped) => void>;
+    static onComponentBlur: SubscribableEvent<(component: FocusableComponentWrapped) => void>;
+    private static _runAfterArbitrationId;
+    private static _lastFocusedProgrammatically;
     protected addFocusListenerOnComponent(component: FocusableComponentInternal, onFocus: () => void): void;
     protected removeFocusListenerFromComponent(component: FocusableComponentInternal, onFocus: () => void): void;
     protected focusComponent(component: FocusableComponentInternal): boolean;
-    private static focusFirst;
-    protected resetFocus(focusFirstWhenNavigatingWithKeyboard: boolean): void;
+    protected resetFocus(focusFirstWhenNavigatingWithKeyboard: boolean, callback?: () => void): void;
     protected _updateComponentFocusRestriction(storedComponent: StoredFocusableComponent): void;
     private static _updateComponentTabIndexAndIFAOverrides;
+    static setLastFocusedProgrammatically(component: FocusableComponentInternal): void;
+    static getLastFocusedProgrammatically(reset?: boolean): FocusableComponentInternal | undefined;
+    static getFocusableComponentWrapped(component: FocusableComponentInternal): FocusableComponentWrapped | undefined;
 }
 export declare function applyFocusableComponentMixin(Component: any, isConditionallyFocusable?: Function, accessibleOnly?: boolean): void;
 export default FocusManager;

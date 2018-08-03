@@ -204,7 +204,7 @@ var RootView = /** @class */ (function (_super) {
         _this.state = _this._getInitialState();
         // Initialize the root FocusManager which is aware of all
         // focusable elements.
-        _this._focusManager = new FocusManager_1.default(undefined);
+        _this._focusManager = new FocusManager_1.default(undefined, _this);
         return _this;
     }
     RootView.prototype.getChildContext = function () {

@@ -42,6 +42,8 @@ var KEY_CODE_F10 = 121;
 var KEY_CODE_APP = 500;
 var DOWN_KEYCODES = [KEY_CODE_SPACE, KEY_CODE_ENTER, KEY_CODE_APP, KEY_CODE_F10];
 var UP_KEYCODES = [KEY_CODE_SPACE];
+var _isNativeFocusOutlineEnabled = UserInterface_1.default.isNativeFocusOutlineEnabled();
+UserInterface_1.default.nativeFocusOutlineEnabledEvent.subscribe(function (enabled) { return _isNativeFocusOutlineEnabled = enabled; });
 var FocusableText = RNW.createFocusableComponent(RN.Text);
 var Link = /** @class */ (function (_super) {
     __extends(Link, _super);
@@ -73,8 +75,8 @@ var Link = /** @class */ (function (_super) {
                 if ((key_1 === KEY_CODE_APP) || (key_1 === KEY_CODE_F10 && keyEvent.shiftKey)) {
                     if (_this._isMounted) {
                         UserInterface_1.default.measureLayoutRelativeToWindow(_this).then(function (layoutInfo) {
-                            // need to simulate the mouse event so that we 
-                            // can show the context menu in the right position 
+                            // need to simulate the mouse event so that we
+                            // can show the context menu in the right position
                             if (_this._isMounted) {
                                 var mouseEvent = EventHelpers_1.default.keyboardToMouseEvent(keyEvent, layoutInfo, _this._getContextMenuOffset());
                                 if (_this.props.onContextMenu) {
@@ -96,6 +98,11 @@ var Link = /** @class */ (function (_super) {
         _this._onFocus = function (e) {
             if (e.currentTarget === e.target) {
                 _this.onFocus();
+            }
+        };
+        _this._onBlur = function (e) {
+            if (e.currentTarget === e.target) {
+                _this.onBlur();
             }
         };
         _this.state = {
@@ -149,7 +156,7 @@ var Link = /** @class */ (function (_super) {
             throw new Error('Link: ReactXP must not use string refs internally');
         }
         var componentRef = originalRef;
-        var focusableTextProps = __assign({}, internalProps, { componentRef: componentRef, ref: this._onFocusableRef, isTabStop: windowsTabFocusable, tabIndex: tabIndex, importantForAccessibility: importantForAccessibility, disableSystemFocusVisuals: false, handledKeyDownKeys: DOWN_KEYCODES, handledKeyUpKeys: UP_KEYCODES, onKeyDown: this._onKeyDown, onKeyUp: this._onKeyUp, onFocus: this._onFocus, onAccessibilityTap: this._onPress });
+        var focusableTextProps = __assign({}, internalProps, { componentRef: componentRef, ref: this._onFocusableRef, isTabStop: windowsTabFocusable, tabIndex: tabIndex, importantForAccessibility: importantForAccessibility, disableSystemFocusVisuals: !_isNativeFocusOutlineEnabled, handledKeyDownKeys: DOWN_KEYCODES, handledKeyUpKeys: UP_KEYCODES, onKeyDown: this._onKeyDown, onKeyUp: this._onKeyUp, onFocus: this._onFocus, onBlur: this._onBlur, onAccessibilityTap: this._onPress });
         return focusableTextProps;
     };
     Link.prototype._renderLinkAsNativeHyperlink = function (internalProps) {
@@ -158,7 +165,7 @@ var Link = /** @class */ (function (_super) {
         if (typeof originalRef === 'string') {
             throw new Error('Link: ReactXP must not use string refs internally');
         }
-        return (React.createElement(RNW.HyperlinkWindows, __assign({}, internalProps, { ref: this._onNativeHyperlinkRef, onFocus: this._onFocus })));
+        return (React.createElement(RNW.HyperlinkWindows, __assign({}, internalProps, { ref: this._onNativeHyperlinkRef, onFocus: this._onFocus, onBlur: this._onBlur })));
     };
     Link.prototype.focus = function () {
         if (this._focusableElement && this._focusableElement.focus) {
@@ -196,6 +203,9 @@ var Link = /** @class */ (function (_super) {
     // From FocusManagerFocusableComponent interface
     //
     Link.prototype.onFocus = function () {
+        // Focus Manager hook
+    };
+    Link.prototype.onBlur = function () {
         // Focus Manager hook
     };
     Link.prototype.getTabIndex = function () {

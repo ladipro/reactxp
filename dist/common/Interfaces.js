@@ -96,6 +96,7 @@ var UserInterface = /** @class */ (function () {
         this.contentSizeMultiplierChangedEvent = new subscribableevent_1.default();
         this.touchLatencyEvent = new subscribableevent_1.default();
         this.keyboardNavigationEvent = new subscribableevent_1.default();
+        this.nativeFocusOutlineEnabledEvent = new subscribableevent_1.default();
     }
     return UserInterface;
 }());

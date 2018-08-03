@@ -43,6 +43,8 @@ var KEY_CODE_APP = 500;
 var DOWN_KEYCODES = [KEY_CODE_SPACE, KEY_CODE_ENTER, KEY_CODE_F10, KEY_CODE_APP];
 var UP_KEYCODES = [KEY_CODE_SPACE];
 var FocusableAnimatedView = RNW.createFocusableComponent(RN.Animated.View);
+var _isNativeFocusOutlineEnabled = UserInterface_1.default.isNativeFocusOutlineEnabled();
+UserInterface_1.default.nativeFocusOutlineEnabledEvent.subscribe(function (enabled) { return _isNativeFocusOutlineEnabled = enabled; });
 var Button = /** @class */ (function (_super) {
     __extends(Button, _super);
     function Button() {
@@ -73,8 +75,8 @@ var Button = /** @class */ (function (_super) {
                     if ((key === KEY_CODE_APP) || (key === KEY_CODE_F10 && keyEvent_1.shiftKey)) {
                         if (_this._isMounted) {
                             UserInterface_1.default.measureLayoutRelativeToWindow(_this).then(function (layoutInfo) {
-                                // need to simulate the mouse event so that we 
-                                // can show the context menu in the right position 
+                                // need to simulate the mouse event so that we
+                                // can show the context menu in the right position
                                 if (_this._isMounted) {
                                     var mouseEvent = EventHelpers_1.default.keyboardToMouseEvent(keyEvent_1, layoutInfo, _this._getContextMenuOffset());
                                     if (_this.props.onContextMenu) {
@@ -108,6 +110,9 @@ var Button = /** @class */ (function (_super) {
             }
         };
         _this._onBlur = function (e) {
+            if (e.currentTarget === e.target) {
+                _this.onBlur();
+            }
             _this._isFocusedWithKeyboard = false;
             _this._onHoverEnd(e);
             if (_this.props.onBlur) {
@@ -152,7 +157,7 @@ var Button = /** @class */ (function (_super) {
             throw new Error('Button: ReactXP must not use string refs internally');
         }
         var componentRef = originalRef;
-        var focusableViewProps = __assign({}, internalProps, { ref: onMount, componentRef: componentRef, onMouseEnter: this._onMouseEnter, onMouseLeave: this._onMouseLeave, isTabStop: windowsTabFocusable, tabIndex: tabIndex, importantForAccessibility: importantForAccessibility, disableSystemFocusVisuals: false, handledKeyDownKeys: DOWN_KEYCODES, handledKeyUpKeys: UP_KEYCODES, onKeyDown: this._onKeyDown, onKeyUp: this._onKeyUp, onFocus: this._onFocus, onBlur: this._onBlur, onAccessibilityTap: this._onAccessibilityTap });
+        var focusableViewProps = __assign({}, internalProps, { ref: onMount, componentRef: componentRef, onMouseEnter: this._onMouseEnter, onMouseLeave: this._onMouseLeave, isTabStop: windowsTabFocusable, tabIndex: tabIndex, importantForAccessibility: importantForAccessibility, disableSystemFocusVisuals: !_isNativeFocusOutlineEnabled, handledKeyDownKeys: DOWN_KEYCODES, handledKeyUpKeys: UP_KEYCODES, onKeyDown: this._onKeyDown, onKeyUp: this._onKeyUp, onFocus: this._onFocus, onBlur: this._onBlur, onAccessibilityTap: this._onAccessibilityTap });
         return (React.createElement(FocusableAnimatedView, __assign({}, focusableViewProps), this.props.children));
     };
     Button.prototype.focus = function () {
@@ -191,6 +196,9 @@ var Button = /** @class */ (function (_super) {
     // From FocusManagerFocusableComponent interface
     //
     Button.prototype.onFocus = function () {
+        // Focus Manager hook
+    };
+    Button.prototype.onBlur = function () {
         // Focus Manager hook
     };
     Button.prototype.getTabIndex = function () {

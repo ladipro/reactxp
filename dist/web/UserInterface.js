@@ -24,11 +24,28 @@ var ScrollViewConfig_1 = require("./ScrollViewConfig");
 var SyncTasks = require("synctasks");
 var FrontLayerViewManager_1 = require("./FrontLayerViewManager");
 var RX = require("../common/Interfaces");
+var _nativeFocusOutlineDisabler;
+function _setNativeFocusOutlineEnabled(enabled) {
+    if (typeof document !== 'undefined') {
+        if (!enabled && !_nativeFocusOutlineDisabler) {
+            var disableNativeOutline = '*:focus { outline: none; }';
+            _nativeFocusOutlineDisabler = document.createElement('style');
+            _nativeFocusOutlineDisabler.type = 'text/css';
+            _nativeFocusOutlineDisabler.appendChild(document.createTextNode(disableNativeOutline));
+            document.head.appendChild(_nativeFocusOutlineDisabler);
+        }
+        else if (enabled && _nativeFocusOutlineDisabler) {
+            document.head.removeChild(_nativeFocusOutlineDisabler);
+            _nativeFocusOutlineDisabler = undefined;
+        }
+    }
+}
 var UserInterface = /** @class */ (function (_super) {
     __extends(UserInterface, _super);
     function UserInterface() {
         var _this = _super.call(this) || this;
         _this._isNavigatingWithKeyboard = false;
+        _this._isNativeFocusOutlineEnabled = true;
         _this._keyboardNavigationStateChanged = function (isNavigatingWithKeyboard) {
             _this._isNavigatingWithKeyboard = isNavigatingWithKeyboard;
         };
@@ -126,6 +143,17 @@ var UserInterface = /** @class */ (function (_super) {
     };
     UserInterface.prototype.isNavigatingWithKeyboard = function () {
         return this._isNavigatingWithKeyboard;
+    };
+    UserInterface.prototype.setNativeFocusOutlineEnabled = function (enabled) {
+        if (this._isNativeFocusOutlineEnabled !== enabled) {
+            this._isNativeFocusOutlineEnabled = enabled;
+            _setNativeFocusOutlineEnabled(enabled);
+            this.nativeFocusOutlineEnabledEvent.fire(enabled);
+        }
+        this._isNativeFocusOutlineEnabled = enabled;
+    };
+    UserInterface.prototype.isNativeFocusOutlineEnabled = function () {
+        return this._isNativeFocusOutlineEnabled;
     };
     return UserInterface;
 }(RX.UserInterface));

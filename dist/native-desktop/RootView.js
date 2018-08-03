@@ -55,7 +55,28 @@ function applyDesktopBehaviorMixin(RootViewBase) {
                 }
                 var _this = _super.apply(this, args) || this;
                 _this._keyboardHandlerInstalled = false;
+                _this._shouldEnableKeyboardNavigationModeOnFocus = false;
+                _this._onComponentFocus = function (wrapped) {
+                    if (_this._updateKeyboardNavigationModeOnFocusTimer) {
+                        Timers_1.default.clearTimeout(_this._updateKeyboardNavigationModeOnFocusTimer);
+                    }
+                    _this._updateKeyboardNavigationModeOnFocusTimer = Timers_1.default.setTimeout(function () {
+                        _this._updateKeyboardNavigationModeOnFocusTimer = undefined;
+                        var prev = _this._prevFocusedComponent;
+                        var curShouldEnable = _this._shouldEnableKeyboardNavigationModeOnFocus;
+                        _this._prevFocusedComponent = wrapped;
+                        _this._shouldEnableKeyboardNavigationModeOnFocus = true;
+                        if ((prev && (prev.component === wrapped.component)) ||
+                            (wrapped.component === FocusManager_1.FocusManager.getLastFocusedProgrammatically(true))) {
+                            return;
+                        }
+                        if (!UserInterface_1.default.isNavigatingWithKeyboard() && curShouldEnable) {
+                            _this._updateKeyboardNavigationState(true);
+                        }
+                    }, 100);
+                };
                 _this._onTouchStartCapture = function (e) {
+                    _this._shouldEnableKeyboardNavigationModeOnFocus = false;
                     _this._updateKeyboardNavigationState(false);
                 };
                 _this._onKeyDownCapture = function (e) {
@@ -66,13 +87,13 @@ function applyDesktopBehaviorMixin(RootViewBase) {
                     if (kbdEvent.keyCode === KEY_CODE_ESC) {
                         // If Esc is pressed and the focused element stays the same after some time,
                         // switch the keyboard navigation off to dismiss the outline.
-                        var activeComponent_1 = FocusManager_1.default.getCurrentFocusedComponent();
+                        var activeComponent_1 = FocusManager_1.FocusManager.getCurrentFocusedComponent();
                         if (_this._isNavigatingWithKeyboardUpateTimer) {
-                            clearTimeout(_this._isNavigatingWithKeyboardUpateTimer);
+                            Timers_1.default.clearTimeout(_this._isNavigatingWithKeyboardUpateTimer);
                         }
                         _this._isNavigatingWithKeyboardUpateTimer = Timers_1.default.setTimeout(function () {
                             _this._isNavigatingWithKeyboardUpateTimer = undefined;
-                            if (activeComponent_1 === FocusManager_1.default.getCurrentFocusedComponent()) {
+                            if (activeComponent_1 === FocusManager_1.FocusManager.getCurrentFocusedComponent()) {
                                 _this._updateKeyboardNavigationState(false);
                             }
                         }, 500);
@@ -103,12 +124,24 @@ function applyDesktopBehaviorMixin(RootViewBase) {
                 };
                 // Initialize the root FocusManager which is aware of all
                 // focusable elements.
-                _this._focusManager = new FocusManager_1.default(undefined);
+                _this._focusManager = new FocusManager_1.FocusManager(undefined, _this);
                 return _this;
             }
+            RootView.prototype.componentDidMount = function () {
+                if (_super.prototype.componentDidMount) {
+                    _super.prototype.componentDidMount.call(this);
+                }
+                FocusManager_1.FocusManager.onComponentFocus.subscribe(this._onComponentFocus);
+            };
+            RootView.prototype.componentWillUnmount = function () {
+                if (_super.prototype.componentWillUnmount) {
+                    _super.prototype.componentWillUnmount.call(this);
+                }
+                FocusManager_1.FocusManager.onComponentFocus.unsubscribe(this._onComponentFocus);
+            };
             RootView.prototype._updateKeyboardNavigationState = function (isNavigatingWithKeyboard) {
                 if (this._isNavigatingWithKeyboardUpateTimer) {
-                    clearTimeout(this._isNavigatingWithKeyboardUpateTimer);
+                    Timers_1.default.clearTimeout(this._isNavigatingWithKeyboardUpateTimer);
                     this._isNavigatingWithKeyboardUpateTimer = undefined;
                 }
                 if (UserInterface_1.default.isNavigatingWithKeyboard() !== isNavigatingWithKeyboard) {

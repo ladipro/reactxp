@@ -667,9 +667,9 @@ function createAnimatedComponent(Component) {
                 this._mountedComponent.blur();
             }
         };
-        AnimatedComponentGenerated.prototype.setFocusRestricted = function (restricted) {
+        AnimatedComponentGenerated.prototype.setFocusRestricted = function (restricted, callback) {
             if (this._mountedComponent && this._mountedComponent.setFocusRestricted) {
-                this._mountedComponent.setFocusRestricted(restricted);
+                this._mountedComponent.setFocusRestricted(restricted, callback);
             }
         };
         AnimatedComponentGenerated.prototype.setFocusLimited = function (limited) {

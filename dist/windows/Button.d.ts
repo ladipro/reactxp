@@ -36,6 +36,7 @@ export declare class Button extends ButtonBase implements React.ChildContextProv
     protected _onHoverStart: (e: React.SyntheticEvent<any>) => void;
     protected _onHoverEnd: (e: React.SyntheticEvent<any>) => void;
     onFocus(): void;
+    onBlur(): void;
     getTabIndex(): number | undefined;
     getImportantForAccessibility(): ImportantForAccessibilityValue | undefined;
     updateNativeAccessibilityProps(): void;

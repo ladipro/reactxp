@@ -38,6 +38,7 @@ var UserInterface = /** @class */ (function (_super) {
     function UserInterface() {
         var _this = _super.call(this) || this;
         _this._isNavigatingWithKeyboard = false;
+        _this._isNativeFocusOutlineEnabled = true;
         _this._keyboardNavigationStateChanged = function (isNavigatingWithKeyboard) {
             _this._isNavigatingWithKeyboard = isNavigatingWithKeyboard;
         };
@@ -187,6 +188,16 @@ var UserInterface = /** @class */ (function (_super) {
     };
     UserInterface.prototype.isNavigatingWithKeyboard = function () {
         return this._isNavigatingWithKeyboard;
+    };
+    UserInterface.prototype.setNativeFocusOutlineEnabled = function (enabled) {
+        if (this._isNativeFocusOutlineEnabled !== enabled) {
+            this._isNativeFocusOutlineEnabled = enabled;
+            this.nativeFocusOutlineEnabledEvent.fire(enabled);
+        }
+        this._isNativeFocusOutlineEnabled = enabled;
+    };
+    UserInterface.prototype.isNativeFocusOutlineEnabled = function () {
+        return this._isNativeFocusOutlineEnabled;
     };
     return UserInterface;
 }(RX.UserInterface));

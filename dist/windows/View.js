@@ -45,6 +45,8 @@ var KEY_CODE_F10 = 121;
 var KEY_CODE_APP = 500;
 var DOWN_KEYCODES = [KEY_CODE_SPACE, KEY_CODE_ENTER, KEY_CODE_F10, KEY_CODE_APP];
 var UP_KEYCODES = [KEY_CODE_SPACE];
+var _isNativeFocusOutlineEnabled = UserInterface_1.default.isNativeFocusOutlineEnabled();
+UserInterface_1.default.nativeFocusOutlineEnabledEvent.subscribe(function (enabled) { return _isNativeFocusOutlineEnabled = enabled; });
 var FocusableView = RNW.createFocusableComponent(RN.View);
 var FocusableAnimatedView = RNW.createFocusableComponent(RN.Animated.View);
 var View = /** @class */ (function (_super) {
@@ -93,6 +95,9 @@ var View = /** @class */ (function (_super) {
             }
         };
         _this._onBlur = function (e) {
+            if (e.currentTarget === e.target) {
+                _this.onBlur();
+            }
             if (_this.props.onBlur) {
                 _this.props.onBlur(EventHelpers_1.default.toFocusEvent(e));
             }
@@ -306,7 +311,7 @@ var View = /** @class */ (function (_super) {
                 throw new Error('View: ReactXP must not use string refs internally');
             }
             var componentRef = originalRef;
-            var focusableViewProps = __assign({}, this._internalProps, { ref: this._onFocusableRef, componentRef: componentRef, isTabStop: windowsTabFocusable, tabIndex: tabIndex, importantForAccessibility: importantForAccessibility, disableSystemFocusVisuals: false, handledKeyDownKeys: DOWN_KEYCODES, handledKeyUpKeys: UP_KEYCODES, onKeyDown: this._onFocusableKeyDown, onKeyUp: this._onFocusableKeyUp, onFocus: this._onFocus, onBlur: this._onBlur, onAccessibilityTap: this._internalProps.onPress, testID: this.props.testId });
+            var focusableViewProps = __assign({}, this._internalProps, { ref: this._onFocusableRef, componentRef: componentRef, isTabStop: windowsTabFocusable, tabIndex: tabIndex, importantForAccessibility: importantForAccessibility, disableSystemFocusVisuals: !_isNativeFocusOutlineEnabled, handledKeyDownKeys: DOWN_KEYCODES, handledKeyUpKeys: UP_KEYCODES, onKeyDown: this._onFocusableKeyDown, onKeyUp: this._onFocusableKeyUp, onFocus: this._onFocus, onBlur: this._onBlur, onAccessibilityTap: this._internalProps.onPress, testID: this.props.testId });
             var PotentiallyAnimatedFocusableView = this._isButton(this.props) ? FocusableAnimatedView : FocusableView;
             return (React.createElement(PotentiallyAnimatedFocusableView, __assign({}, focusableViewProps)));
         }
@@ -380,17 +385,17 @@ var View = /** @class */ (function (_super) {
     View.prototype._isHidden = function () {
         return !!this._popupContainer && this._popupContainer.isHidden();
     };
-    View.prototype.setFocusRestricted = function (restricted) {
+    View.prototype.setFocusRestricted = function (restricted, callback) {
         if (!this._focusManager || !this.props.restrictFocusWithin) {
             console.error('View: setFocusRestricted method requires restrictFocusWithin property to be set');
             return;
         }
         if (!this._isHidden()) {
             if (restricted) {
-                this._focusManager.restrictFocusWithin(FocusManager_1.RestrictFocusType.RestrictedFocusFirst);
+                this._focusManager.restrictFocusWithin(FocusManager_1.RestrictFocusType.RestrictedFocusFirst, false, callback);
             }
             else {
-                this._focusManager.removeFocusRestriction();
+                this._focusManager.removeFocusRestriction(callback);
             }
         }
         this._isFocusRestricted = restricted;
@@ -434,6 +439,9 @@ var View = /** @class */ (function (_super) {
     // From FocusManagerFocusableComponent interface
     //
     View.prototype.onFocus = function () {
+        // Focus Manager hook
+    };
+    View.prototype.onBlur = function () {
         // Focus Manager hook
     };
     View.prototype.getTabIndex = function () {

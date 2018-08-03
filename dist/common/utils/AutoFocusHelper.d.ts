@@ -10,12 +10,13 @@
 import React = require('react');
 import Types = require('../Types');
 import Interfaces = require('../Interfaces');
+export declare type FocusCandidateComponent = React.Component<any, any> & Interfaces.FocusableComponent;
 export declare enum FocusCandidateType {
     Focus = 1,
     FocusFirst = 2
 }
 export interface FocusCandidateInternal {
-    component: React.Component<any, any>;
+    component: FocusCandidateComponent;
     focus: () => void;
     isAvailable: () => boolean;
     type: FocusCandidateType;
@@ -23,6 +24,8 @@ export interface FocusCandidateInternal {
 }
 export declare type SortAndFilterFunc = (candidates: FocusCandidateInternal[]) => FocusCandidateInternal[];
 export declare function setSortAndFilterFunc(sortAndFilter: SortAndFilterFunc): void;
+export declare function runAfterArbitration(callback: () => void): number;
+export declare function cancelRunAfterArbitration(id: number): void;
 export declare class FocusArbitratorProvider {
     private _id;
     private _parentArbitratorProvider;
@@ -35,5 +38,5 @@ export declare class FocusArbitratorProvider {
     private _requestFocus;
     private static _arbitrate;
     setCallback(arbitrator?: Types.FocusArbitrator): void;
-    static requestFocus(component: React.Component<any, any>, focus: () => void, isAvailable: () => boolean, type?: FocusCandidateType): void;
+    static requestFocus(component: FocusCandidateComponent | (() => FocusCandidateComponent | undefined), focus: () => void, isAvailable: () => boolean, type?: FocusCandidateType): void;
 }
