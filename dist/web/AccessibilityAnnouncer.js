@@ -96,7 +96,7 @@ var AccessibilityAnnouncer = /** @class */ (function (_super) {
                 this.state.announcementText,
                 " ")) :
             this.state.announcementText;
-        return (React.createElement("div", { style: _styles.liveRegionContainer, "aria-live": AccessibilityUtil_1.default.accessibilityLiveRegionToString(Types.AccessibilityLiveRegion.Polite), "aria-atomic": 'true', "aria-relevant": 'additions text' }, announcement));
+        return (React.createElement("div", { style: _styles.liveRegionContainer, "aria-live": AccessibilityUtil_1.default.accessibilityLiveRegionToString(Types.AccessibilityLiveRegion.Assertive), "aria-atomic": 'true', "aria-relevant": 'additions text' }, announcement));
     };
     AccessibilityAnnouncer.prototype._cancelClearAnnouncementTimer = function () {
         if (this._clearAnnouncementTimer) {

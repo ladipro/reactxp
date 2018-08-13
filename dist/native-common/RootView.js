@@ -112,7 +112,7 @@ var BaseRootView = /** @class */ (function (_super) {
         return this.renderTopView(content);
     };
     BaseRootView.prototype._renderAnnouncerView = function () {
-        return (React.createElement(RN.View, { style: _styles.liveRegionContainer, accessibilityLabel: this.state.announcementText, accessibilityLiveRegion: AccessibilityUtil_1.default.accessibilityLiveRegionToString(Types.AccessibilityLiveRegion.Polite) }));
+        return (React.createElement(RN.View, { style: _styles.liveRegionContainer, accessibilityLabel: this.state.announcementText, accessibilityLiveRegion: AccessibilityUtil_1.default.accessibilityLiveRegionToString(Types.AccessibilityLiveRegion.Assertive) }));
     };
     BaseRootView.prototype.renderTopView = function (content) {
         return content;
