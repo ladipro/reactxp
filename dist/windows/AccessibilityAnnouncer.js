@@ -101,7 +101,7 @@ var AccessibilityAnnouncer = /** @class */ (function (_super) {
         }
     };
     AccessibilityAnnouncer.prototype.render = function () {
-        return (React.createElement(RN.View, { ref: this._onViewRef, style: _styles.liveRegionContainer, accessibilityLiveRegion: AccessibilityUtil_1.default.accessibilityLiveRegionToString(Types.AccessibilityLiveRegion.Polite) }));
+        return (React.createElement(RN.View, { ref: this._onViewRef, style: _styles.liveRegionContainer, accessibilityLiveRegion: AccessibilityUtil_1.default.accessibilityLiveRegionToString(Types.AccessibilityLiveRegion.Assertive) }));
     };
     AccessibilityAnnouncer.prototype._tryDequeueAndAnnounce = function () {
         if (this._announcementQueueTimer === undefined) {
