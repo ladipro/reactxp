@@ -31,6 +31,7 @@ var assert = require("assert");
 var React = require("react");
 var RN = require("react-native");
 var SyncTasks = require("synctasks");
+var AppConfig_1 = require("../common/AppConfig");
 var MainViewStore_1 = require("./MainViewStore");
 var RX = require("../common/Interfaces");
 var UserInterface = /** @class */ (function (_super) {
@@ -46,6 +47,7 @@ var UserInterface = /** @class */ (function (_super) {
             _this.contentSizeMultiplierChangedEvent.fire(event.window.fontScale);
         });
         _this.keyboardNavigationEvent.subscribe(_this._keyboardNavigationStateChanged);
+        _this._rootViewRegistry = {};
         return _this;
     }
     UserInterface.prototype.measureLayoutRelativeToWindow = function (component) {
@@ -198,6 +200,21 @@ var UserInterface = /** @class */ (function (_super) {
     };
     UserInterface.prototype.isNativeFocusOutlineEnabled = function () {
         return this._isNativeFocusOutlineEnabled;
+    };
+    UserInterface.prototype.notifyRootViewInstanceCreated = function (rootViewId, nodeHandle) {
+        if (AppConfig_1.default.isDevelopmentMode()) {
+            var existing = this.findNodeHandleByRootViewId(rootViewId);
+            if (existing && existing !== nodeHandle) {
+                console.warn('Duplicate reactxp_rootViewId!');
+            }
+        }
+        this._rootViewRegistry[rootViewId] = nodeHandle;
+    };
+    UserInterface.prototype.notifyRootViewInstanceDestroyed = function (rootViewId) {
+        delete this._rootViewRegistry[rootViewId];
+    };
+    UserInterface.prototype.findNodeHandleByRootViewId = function (rootViewId) {
+        return this._rootViewRegistry[rootViewId];
     };
     return UserInterface;
 }(RX.UserInterface));

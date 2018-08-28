@@ -26,6 +26,7 @@ declare abstract class BaseRootView<P extends BaseRootViewProps> extends React.C
     protected abstract _getPropsForMainView(): {};
     constructor(props: P);
     componentWillMount(): void;
+    componentDidMount(): void;
     componentWillUnmount(): void;
     render(): JSX.Element;
     protected _renderAnnouncerView(): JSX.Element;

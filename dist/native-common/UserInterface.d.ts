@@ -17,6 +17,7 @@ export declare class UserInterface extends RX.UserInterface {
     private _isNavigatingWithKeyboard;
     private _isNativeFocusOutlineEnabled;
     private _rootViewUsingPropsFactory;
+    private _rootViewRegistry;
     constructor();
     measureLayoutRelativeToWindow(component: React.Component<any, any>): SyncTasks.Promise<Types.LayoutInfo>;
     measureLayoutRelativeToAncestor(component: React.Component<any, any>, ancestor: React.Component<any, any>): SyncTasks.Promise<Types.LayoutInfo>;
@@ -38,6 +39,9 @@ export declare class UserInterface extends RX.UserInterface {
     private _keyboardNavigationStateChanged;
     setNativeFocusOutlineEnabled(enabled: boolean): void;
     isNativeFocusOutlineEnabled(): boolean;
+    notifyRootViewInstanceCreated(rootViewId: string, nodeHandle: number): void;
+    notifyRootViewInstanceDestroyed(rootViewId: string): void;
+    findNodeHandleByRootViewId(rootViewId: string): number | undefined;
 }
 declare const _default: UserInterface;
 export default _default;

@@ -690,6 +690,7 @@ export interface AlertModalTheme {
 export interface AlertOptions {
     icon?: string;
     theme?: AlertModalTheme;
+    rootViewId?: string;
 }
 export declare enum LocationErrorType {
     PermissionDenied = 1,

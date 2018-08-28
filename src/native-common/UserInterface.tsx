@@ -13,6 +13,7 @@ import React = require('react');
 import RN = require('react-native');
 import SyncTasks = require('synctasks');
 
+import AppConfig from '../common/AppConfig';
 import MainViewStore from './MainViewStore';
 import RX = require('../common/Interfaces');
 import Types = require('../common/Types');
@@ -22,6 +23,7 @@ export class UserInterface extends RX.UserInterface {
     private _isNavigatingWithKeyboard = false;
     private _isNativeFocusOutlineEnabled = true;
     private _rootViewUsingPropsFactory: RN.ComponentProvider | undefined;
+    private _rootViewRegistry: {[id: string]: number};
 
     constructor() {
         super();
@@ -29,6 +31,7 @@ export class UserInterface extends RX.UserInterface {
             this.contentSizeMultiplierChangedEvent.fire(event.window.fontScale);
         });
         this.keyboardNavigationEvent.subscribe(this._keyboardNavigationStateChanged);
+        this._rootViewRegistry = {};
     }
 
     measureLayoutRelativeToWindow(component: React.Component<any, any>):
@@ -219,6 +222,25 @@ export class UserInterface extends RX.UserInterface {
 
     isNativeFocusOutlineEnabled(): boolean {
         return this._isNativeFocusOutlineEnabled;
+    }
+    
+    notifyRootViewInstanceCreated(rootViewId: string, nodeHandle: number): void {
+        if (AppConfig.isDevelopmentMode()) {
+            const existing = this.findNodeHandleByRootViewId(rootViewId);
+            if (existing && existing !== nodeHandle) {
+                console.warn('Duplicate reactxp_rootViewId!');
+            }
+        }
+
+        this._rootViewRegistry[rootViewId] = nodeHandle;
+    }
+
+    notifyRootViewInstanceDestroyed(rootViewId: string): void {
+        delete this._rootViewRegistry[rootViewId];
+    }
+
+    findNodeHandleByRootViewId(rootViewId: string): number | undefined {
+        return this._rootViewRegistry[rootViewId];
     }
 }
 

@@ -38,6 +38,7 @@ var FrontLayerViewManager_1 = require("./FrontLayerViewManager");
 var MainViewStore_1 = require("./MainViewStore");
 var Styles_1 = require("./Styles");
 var Types = require("../common/Types");
+var UserInterface_1 = require("../native-common/UserInterface");
 var _styles = {
     rootViewStyle: Styles_1.default.createViewStyle({
         flex: 1,
@@ -81,7 +82,15 @@ var BaseRootView = /** @class */ (function (_super) {
             _this.forceUpdate();
         });
     };
+    BaseRootView.prototype.componentDidMount = function () {
+        if (this._rootViewId) {
+            UserInterface_1.default.notifyRootViewInstanceCreated(this._rootViewId, RN.findNodeHandle(this));
+        }
+    };
     BaseRootView.prototype.componentWillUnmount = function () {
+        if (this._rootViewId) {
+            UserInterface_1.default.notifyRootViewInstanceDestroyed(this._rootViewId);
+        }
         if (this._frontLayerViewChangedSubscription) {
             this._frontLayerViewChangedSubscription.unsubscribe();
             this._frontLayerViewChangedSubscription = undefined;
