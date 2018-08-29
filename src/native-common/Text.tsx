@@ -63,7 +63,8 @@ export class Text extends React.Component<Types.TextProps, Types.Stateless> impl
 
         const extendedProps: RN.ExtendedTextProps = {
             maxContentSizeMultiplier: this.props.maxContentSizeMultiplier,
-            disableContextMenu: disableContextMenu
+            disableContextMenu: disableContextMenu,
+            onSelectionChange: this._onSelectionChange
         };
 
         return (
@@ -104,6 +105,13 @@ export class Text extends React.Component<Types.TextProps, Types.Stateless> impl
             if (this.props.onPress) {
                 this.props.onPress(EventHelpers.toMouseEvent(e));
             }
+        }
+    }
+
+    private _onSelectionChange = (selEvent: React.SyntheticEvent<RN.Text>) => {
+        if (this.props.onSelectionChange) {
+            let selectedText: string = (selEvent.nativeEvent as any).selectedText;
+            this.props.onSelectionChange(selectedText);
         }
     }
 

@@ -558,6 +558,7 @@ export interface AnimatedImageProps extends ImagePropsShared {
 // | example     |
 export interface TextPropsShared extends CommonProps {
     selectable?: boolean;
+    onSelectionChange?: (selectedText: string) => void;
     numberOfLines?: number;
 
     // Should fonts be scaled according to system setting? Defaults

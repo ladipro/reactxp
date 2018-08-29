@@ -1,11 +1,4 @@
-/**
-* Text.tsx
-*
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the MIT license.
-*
-* RN-specific implementation of the cross-platform Text abstraction.
-*/
+/// <reference types="react" />
 import React = require('react');
 import RN = require('react-native');
 import { FocusArbitratorProvider } from '../common/utils/AutoFocusHelper';
@@ -25,6 +18,7 @@ export declare class Text extends React.Component<Types.TextProps, Types.Statele
     componentDidMount(): void;
     protected _onMount: (component: any) => void;
     private _onPress;
+    private _onSelectionChange;
     getChildContext(): {
         isRxParentAText: boolean;
     };

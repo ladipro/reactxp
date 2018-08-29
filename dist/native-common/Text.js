@@ -59,6 +59,12 @@ var Text = /** @class */ (function (_super) {
                 }
             }
         };
+        _this._onSelectionChange = function (selEvent) {
+            if (_this.props.onSelectionChange) {
+                var selectedText = selEvent.nativeEvent.selectedText;
+                _this.props.onSelectionChange(selectedText);
+            }
+        };
         return _this;
     }
     // To be able to use Text inside TouchableHighlight/TouchableOpacity
@@ -76,7 +82,8 @@ var Text = /** @class */ (function (_super) {
         var disableContextMenu = !!this.props.onContextMenu || !!this.context.isRxParentAContextMenuResponder;
         var extendedProps = {
             maxContentSizeMultiplier: this.props.maxContentSizeMultiplier,
-            disableContextMenu: disableContextMenu
+            disableContextMenu: disableContextMenu,
+            onSelectionChange: this._onSelectionChange
         };
         return (React.createElement(RN.Text, __assign({ style: this._getStyles(), ref: this._onMount, importantForAccessibility: importantForAccessibility, numberOfLines: this.props.numberOfLines, allowFontScaling: this.props.allowFontScaling, onPress: onPress, selectable: this.props.selectable, textBreakStrategy: 'simple', ellipsizeMode: this.props.ellipsizeMode, testID: this.props.testId }, extendedProps), this.props.children));
     };

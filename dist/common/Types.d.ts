@@ -1,3 +1,4 @@
+/// <reference types="react" />
 /**
 * Types.ts
 *
@@ -238,13 +239,13 @@ export declare enum ImportantForAccessibility {
     Auto = 1,
     Yes = 2,
     No = 3,
-    NoHideDescendants = 4
+    NoHideDescendants = 4,
 }
 export declare type AriaLive = 'off' | 'assertive' | 'polite';
 export declare enum AccessibilityLiveRegion {
     None = 0,
     Polite = 1,
-    Assertive = 2
+    Assertive = 2,
 }
 export declare enum AccessibilityTrait {
     Summary = 0,
@@ -283,7 +284,7 @@ export declare enum AccessibilityTrait {
     HasPopup = 33,
     Option = 34,
     Switch = 35,
-    None = 36
+    None = 36,
 }
 export interface FocusableComponent extends RX.FocusableComponent {
 }
@@ -355,6 +356,7 @@ export interface AnimatedImageProps extends ImagePropsShared {
 }
 export interface TextPropsShared extends CommonProps {
     selectable?: boolean;
+    onSelectionChange?: (selectedText: string) => void;
     numberOfLines?: number;
     allowFontScaling?: boolean;
     maxContentSizeMultiplier?: number;
@@ -377,7 +379,7 @@ export declare type ViewLayerType = 'none' | 'software' | 'hardware';
 export declare enum LimitFocusType {
     Unlimited = 0,
     Limited = 1,
-    Accessible = 2
+    Accessible = 2,
 }
 export interface ViewPropsShared extends CommonProps, CommonAccessibilityProps {
     title?: string;
@@ -490,11 +492,11 @@ export declare enum GestureMouseCursor {
     Default = 0,
     Pointer = 1,
     Grab = 2,
-    Move = 3
+    Move = 3,
 }
 export declare enum PreferredPanGesture {
     Horizontal = 0,
-    Vertical = 1
+    Vertical = 1,
 }
 export interface GestureViewProps extends CommonStyledProps<ViewStyleRuleSet>, CommonAccessibilityProps {
     onPinchZoom?: (gestureState: MultiTouchGestureState) => void;
@@ -629,7 +631,7 @@ export declare enum WebViewSandboxMode {
     AllowScripts = 256,
     AllowTopNavigation = 512,
     AllowMixedContentAlways = 1024,
-    AllowMixedContentCompatibilityMode = 2048
+    AllowMixedContentCompatibilityMode = 2048,
 }
 export interface WebViewSource {
     html: string;
@@ -695,7 +697,7 @@ export interface AlertOptions {
 export declare enum LocationErrorType {
     PermissionDenied = 1,
     PositionUnavailable = 2,
-    Timeout = 3
+    Timeout = 3,
 }
 export declare type LocationWatchId = number;
 export declare type LocationSuccessCallback = (position: Position) => void;
@@ -862,7 +864,7 @@ export declare enum LinkingErrorCode {
     NoAppFound = 0,
     UnexpectedFailure = 1,
     Blocked = 2,
-    InitialUrlNotFound = 3
+    InitialUrlNotFound = 3,
 }
 export interface LinkingErrorInfo {
     code: LinkingErrorCode;
@@ -873,7 +875,7 @@ export declare enum AppActivationState {
     Active = 1,
     Background = 2,
     Inactive = 3,
-    Extension = 4
+    Extension = 4,
 }
 export interface LayoutInfo {
     x: number;
@@ -888,5 +890,5 @@ export declare enum DeviceNetworkType {
     Wifi = 2,
     Mobile2G = 3,
     Mobile3G = 4,
-    Mobile4G = 5
+    Mobile4G = 5,
 }

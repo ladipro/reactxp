@@ -22,6 +22,7 @@ declare module 'react-native' {
         maxContentSizeMultiplier?: number;
         disableContextMenu?: boolean;
         tooltip?: string;
+        onSelectionChange?: ((selection: SyntheticEvent<Text>) => void);
     }
 
     interface ExtendedTextInputProps extends RN.TextInputProps {
