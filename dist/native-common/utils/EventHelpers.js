@@ -235,8 +235,7 @@ var EventHelpers = /** @class */ (function () {
         dndEvent.dataTransfer = e.nativeEvent.dataTransfer;
         return dndEvent;
     };
-    EventHelpers.prototype.toMouseButton = function (e) {
-        var nativeEvent = e;
+    EventHelpers.prototype.toMouseButton = function (nativeEvent) {
         if (nativeEvent.button !== undefined) {
             return nativeEvent.button;
         }
@@ -249,7 +248,7 @@ var EventHelpers = /** @class */ (function () {
         return 0;
     };
     EventHelpers.prototype.isRightMouseButton = function (e) {
-        return (this.toMouseButton(e) === 2);
+        return (this.toMouseButton(e.nativeEvent) === 2);
     };
     // Keyboard events do not inherently hold a position that can be used to show flyouts on keyboard input.  
     // We simulate a mouse event so that we can show things like context Menus in the correct position. 
