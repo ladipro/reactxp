@@ -100,19 +100,23 @@ var Text = /** @class */ (function (_super) {
         // but we can correctly handle the common case where numberOfLines is 1.
         var combinedStyles = Styles_1.default.combine([this.props.numberOfLines === 1 ?
                 _styles.ellipsis : _styles.defaultStyle, this.props.style]);
-        // Handle cursor styles
         if (this.props.selectable) {
-            combinedStyles['cursor'] = 'text';
             combinedStyles['userSelect'] = 'text';
             combinedStyles['WebkitUserSelect'] = 'text';
             combinedStyles['MozUserSelect'] = 'text';
             combinedStyles['msUserSelect'] = 'text';
         }
-        else {
-            combinedStyles['cursor'] = 'inherit';
-        }
-        if (this.props.onPress) {
-            combinedStyles['cursor'] = 'pointer';
+        // Handle cursor styles
+        if (!combinedStyles.cursor) {
+            if (this.props.selectable) {
+                combinedStyles['cursor'] = 'text';
+            }
+            else {
+                combinedStyles['cursor'] = 'inherit';
+            }
+            if (this.props.onPress) {
+                combinedStyles['cursor'] = 'pointer';
+            }
         }
         return combinedStyles;
     };
