@@ -26,6 +26,8 @@ export declare class FrontLayerViewManager {
     releaseCachedPopups(): void;
     private modalOptionsMatchesRootViewId;
     private _renderPopup;
+    private _getOverlayContext;
+    isPopupActiveFor(rootViewId?: string | null): boolean;
     getPopupLayerView(rootViewId?: string | null): JSX.Element | null;
     private _onBackgroundPressed;
     private _dismissActivePopup;

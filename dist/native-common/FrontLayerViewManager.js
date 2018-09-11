@@ -181,6 +181,12 @@ var FrontLayerViewManager = /** @class */ (function () {
         var key = (context.popupOptions.cacheable ? 'CP:' : 'P:') + context.popupId;
         return (React.createElement(PopupContainerView_1.default, { key: key, popupOptions: context.popupOptions, anchorHandle: hidden ? undefined : context.anchorHandle, onDismissPopup: hidden ? undefined : function () { return _this.dismissPopup(context.popupId); }, hidden: hidden }));
     };
+    FrontLayerViewManager.prototype._getOverlayContext = function (rootViewId) {
+        return _.findLast(this._overlayStack, function (context) { return context instanceof PopupStackContext && context.popupOptions.rootViewId === rootViewId; });
+    };
+    FrontLayerViewManager.prototype.isPopupActiveFor = function (rootViewId) {
+        return this._getOverlayContext(rootViewId) !== undefined;
+    };
     FrontLayerViewManager.prototype.getPopupLayerView = function (rootViewId) {
         var _this = this;
         if (rootViewId === null) {
@@ -189,7 +195,7 @@ var FrontLayerViewManager = /** @class */ (function () {
             return null;
         }
         var popupContainerViews = [];
-        var overlayContext = _.findLast(this._overlayStack, function (context) { return context instanceof PopupStackContext && context.popupOptions.rootViewId === rootViewId; });
+        var overlayContext = this._getOverlayContext(rootViewId);
         if (overlayContext) {
             popupContainerViews.push(this._renderPopup(overlayContext, false));
         }

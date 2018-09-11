@@ -24,8 +24,10 @@ var _ = require("./lodashMini");
 var assert = require("assert");
 var React = require("react");
 var RN = require("react-native");
+var AccessibilityUtil_1 = require("./AccessibilityUtil");
 var International_1 = require("./International");
 var Timers_1 = require("../common/utils/Timers");
+var Types = require("../common/Types");
 var PopupContainerViewBase_1 = require("../common/PopupContainerViewBase");
 var UserInterface_1 = require("./UserInterface");
 // Width of the "alley" around popups so they don't get too close to the boundary of the screen boundary.
@@ -102,7 +104,10 @@ var PopupContainerView = /** @class */ (function (_super) {
             width: this.props.hidden ? 0 : undefined,
             height: this.props.hidden ? 0 : undefined
         };
-        return (React.createElement(RN.View, { style: style, ref: this._onMount }, popupView));
+        var importantForAccessibility = this.props.hidden
+            ? AccessibilityUtil_1.default.importantForAccessibilityToString(Types.ImportantForAccessibility.NoHideDescendants)
+            : undefined;
+        return (React.createElement(RN.View, { style: style, ref: this._onMount, importantForAccessibility: importantForAccessibility }, popupView));
     };
     PopupContainerView.prototype._recalcPosition = function () {
         var _this = this;

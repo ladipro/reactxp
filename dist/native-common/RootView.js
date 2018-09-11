@@ -107,10 +107,11 @@ var BaseRootView = /** @class */ (function (_super) {
     BaseRootView.prototype.render = function () {
         var modalLayerView = FrontLayerViewManager_1.default.getModalLayerView(this._rootViewId);
         var popupLayerView = FrontLayerViewManager_1.default.getPopupLayerView(this._rootViewId);
+        var isActivePopup = FrontLayerViewManager_1.default.isPopupActiveFor(this._rootViewId);
         var announcerView = this._renderAnnouncerView();
         // When showing a modal/popup we want to hide the mainView shown behind from an accessibility
         // standpoint to ensure that it won't get the focus and the screen reader's attention.
-        var importantForAccessibility = (modalLayerView || popupLayerView) ?
+        var importantForAccessibility = (modalLayerView || isActivePopup) ?
             AccessibilityUtil_1.default.importantForAccessibilityToString(Types.ImportantForAccessibility.NoHideDescendants) :
             undefined; // default
         var content = (React.createElement(RN.Animated.View, { style: _styles.rootViewStyle },
