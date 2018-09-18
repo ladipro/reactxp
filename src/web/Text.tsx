@@ -139,7 +139,7 @@ export class Text extends TextBase {
             combinedStyles['MozUserSelect'] = 'text';
             combinedStyles['msUserSelect'] = 'text';
         }
-        
+
         // Handle cursor styles
         if (!combinedStyles.cursor) {
             if (this.props.selectable) {
@@ -180,6 +180,10 @@ export class Text extends TextBase {
                 el.focus();
             }
         }
+    }
+
+    getSelectedText(): string {
+        return ''; // Not implemented yet.
     }
 }
 

@@ -1,3 +1,4 @@
+/// <reference types="react" />
 /**
 * Text.tsx
 *
@@ -6,8 +7,9 @@
 *
 * RN Windows-specific implementation of the cross-platform Text abstraction.
 */
-/// <reference types="react" />
 import { ImportantForAccessibilityValue } from '../native-common/AccessibilityUtil';
+import React = require('react');
+import RN = require('react-native');
 import { Text as TextBase, TextContext as TextContextBase } from '../native-common/Text';
 import { FocusManagerFocusableComponent } from '../native-desktop/utils/FocusManager';
 export interface TextContext extends TextContextBase {
@@ -15,8 +17,11 @@ export interface TextContext extends TextContextBase {
 }
 export declare class Text extends TextBase implements React.ChildContextProvider<TextContext>, FocusManagerFocusableComponent {
     static contextTypes: React.ValidationMap<any>;
+    private _selectedText;
     context: TextContext;
     static childContextTypes: React.ValidationMap<any>;
+    protected _getExtendedProperties(): RN.ExtendedTextProps;
+    private _onSelectionChange;
     requestFocus(): void;
     getChildContext(): TextContext;
     onFocus(): void;
@@ -24,5 +29,6 @@ export declare class Text extends TextBase implements React.ChildContextProvider
     getTabIndex(): number;
     getImportantForAccessibility(): ImportantForAccessibilityValue | undefined;
     updateNativeAccessibilityProps(): void;
+    getSelectedText(): string;
 }
 export default Text;

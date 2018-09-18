@@ -24,8 +24,8 @@ export declare class Text extends React.Component<Types.TextProps, Types.Statele
     render(): JSX.Element;
     componentDidMount(): void;
     protected _onMount: (component: any) => void;
+    protected _getExtendedProperties(): RN.ExtendedTextProps;
     private _onPress;
-    private _onSelectionChange;
     getChildContext(): {
         isRxParentAText: boolean;
     };
@@ -33,5 +33,6 @@ export declare class Text extends React.Component<Types.TextProps, Types.Statele
     requestFocus(): void;
     focus(): void;
     blur(): void;
+    getSelectedText(): string;
 }
 export default Text;

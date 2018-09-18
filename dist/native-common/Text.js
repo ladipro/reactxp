@@ -59,12 +59,6 @@ var Text = /** @class */ (function (_super) {
                 }
             }
         };
-        _this._onSelectionChange = function (selEvent) {
-            if (_this.props.onSelectionChange) {
-                var selectedText = selEvent.nativeEvent.selectedText;
-                _this.props.onSelectionChange(selectedText);
-            }
-        };
         return _this;
     }
     // To be able to use Text inside TouchableHighlight/TouchableOpacity
@@ -77,20 +71,22 @@ var Text = /** @class */ (function (_super) {
         var importantForAccessibility = AccessibilityUtil_1.default.importantForAccessibilityToString(this.props.importantForAccessibility);
         // The presence of any of the onPress or onContextMenu makes the RN.Text a potential touch responder
         var onPress = (this.props.onPress || this.props.onContextMenu) ? this._onPress : undefined;
-        // The presence of an onContextMenu on this instance or on the first responder parent up the tree
-        // should disable any system provided context menu
-        var disableContextMenu = !!this.props.onContextMenu || !!this.context.isRxParentAContextMenuResponder;
-        var extendedProps = {
-            maxContentSizeMultiplier: this.props.maxContentSizeMultiplier,
-            disableContextMenu: disableContextMenu,
-            onSelectionChange: this._onSelectionChange
-        };
+        var extendedProps = this._getExtendedProperties();
         return (React.createElement(RN.Text, __assign({ style: this._getStyles(), ref: this._onMount, importantForAccessibility: importantForAccessibility, numberOfLines: this.props.numberOfLines, allowFontScaling: this.props.allowFontScaling, onPress: onPress, selectable: this.props.selectable, textBreakStrategy: 'simple', ellipsizeMode: this.props.ellipsizeMode, testID: this.props.testId }, extendedProps), this.props.children));
     };
     Text.prototype.componentDidMount = function () {
         if (this.props.autoFocus) {
             this.requestFocus();
         }
+    };
+    Text.prototype._getExtendedProperties = function () {
+        // The presence of an onContextMenu on this instance or on the first responder parent up the tree
+        // should disable any system provided context menu
+        var disableContextMenu = !!this.props.onContextMenu || !!this.context.isRxParentAContextMenuResponder;
+        return {
+            maxContentSizeMultiplier: this.props.maxContentSizeMultiplier,
+            disableContextMenu: disableContextMenu,
+        };
     };
     Text.prototype.getChildContext = function () {
         // Let descendant RX components know that their nearest RX ancestor is an RX.Text.
@@ -112,6 +108,9 @@ var Text = /** @class */ (function (_super) {
     };
     Text.prototype.blur = function () {
         // No-op
+    };
+    Text.prototype.getSelectedText = function () {
+        return ''; // Implemented for 'windows' only (requires support from RN).
     };
     Text.contextTypes = {
         focusArbitrator: PropTypes.object,

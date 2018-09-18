@@ -32,5 +32,6 @@ export declare class Text extends TextBase {
     blur(): void;
     requestFocus(): void;
     focus(): void;
+    getSelectedText(): string;
 }
 export default Text;

@@ -192,6 +192,7 @@ export declare abstract class Text extends React.Component<Types.TextProps, any>
     abstract focus(): void;
     abstract requestFocus(): void;
     abstract blur(): void;
+    abstract getSelectedText(): string;
 }
 export declare abstract class TextInput extends React.Component<Types.TextInputProps, any> implements FocusableComponent {
     abstract setAccessibilityFocus(): void;

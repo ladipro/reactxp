@@ -34,8 +34,17 @@ var FocusManager_1 = require("../native-desktop/utils/FocusManager");
 var Text = /** @class */ (function (_super) {
     __extends(Text, _super);
     function Text() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this._selectedText = '';
+        _this._onSelectionChange = function (selEvent) {
+            _this._selectedText = selEvent.nativeEvent.selectedText;
+        };
+        return _this;
     }
+    Text.prototype._getExtendedProperties = function () {
+        var superExtendedProps = _super.prototype._getExtendedProperties.call(this);
+        return __assign({}, superExtendedProps, { onSelectionChange: this._onSelectionChange });
+    };
     Text.prototype.requestFocus = function () {
         // UWP doesn't support casually focusing RN.Text elements. We override requestFocus in order to drop any focus requests
     };
@@ -72,6 +81,9 @@ var Text = /** @class */ (function (_super) {
                 importantForAccessibility: importantForAccessibility
             });
         }
+    };
+    Text.prototype.getSelectedText = function () {
+        return this._selectedText;
     };
     Text.contextTypes = __assign({ isRxParentAFocusableInSameFocusManager: PropTypes.bool }, Text_1.Text.contextTypes);
     Text.childContextTypes = __assign({ isRxParentAFocusableInSameFocusManager: PropTypes.bool }, Text_1.Text.childContextTypes);

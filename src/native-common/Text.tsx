@@ -57,15 +57,7 @@ export class Text extends React.Component<Types.TextProps, Types.Stateless> impl
         // The presence of any of the onPress or onContextMenu makes the RN.Text a potential touch responder
         const onPress = (this.props.onPress || this.props.onContextMenu) ? this._onPress : undefined;
 
-        // The presence of an onContextMenu on this instance or on the first responder parent up the tree
-        // should disable any system provided context menu
-        const disableContextMenu = !!this.props.onContextMenu || !!this.context.isRxParentAContextMenuResponder;
-
-        const extendedProps: RN.ExtendedTextProps = {
-            maxContentSizeMultiplier: this.props.maxContentSizeMultiplier,
-            disableContextMenu: disableContextMenu,
-            onSelectionChange: this._onSelectionChange
-        };
+        var extendedProps: RN.ExtendedTextProps = this._getExtendedProperties();
 
         return (
             <RN.Text
@@ -96,6 +88,17 @@ export class Text extends React.Component<Types.TextProps, Types.Stateless> impl
         this._mountedComponent = component;
     }
 
+    protected _getExtendedProperties(): RN.ExtendedTextProps {
+        // The presence of an onContextMenu on this instance or on the first responder parent up the tree
+        // should disable any system provided context menu
+        const disableContextMenu = !!this.props.onContextMenu || !!this.context.isRxParentAContextMenuResponder;
+
+        return {
+            maxContentSizeMultiplier: this.props.maxContentSizeMultiplier,
+            disableContextMenu: disableContextMenu,
+        };
+    }
+
     private _onPress = (e: RN.GestureResponderEvent) => {
         if (EventHelpers.isRightMouseButton(e)) {
             if (this.props.onContextMenu) {
@@ -105,13 +108,6 @@ export class Text extends React.Component<Types.TextProps, Types.Stateless> impl
             if (this.props.onPress) {
                 this.props.onPress(EventHelpers.toMouseEvent(e));
             }
-        }
-    }
-
-    private _onSelectionChange = (selEvent: React.SyntheticEvent<RN.Text>) => {
-        if (this.props.onSelectionChange) {
-            let selectedText: string = (selEvent.nativeEvent as any).selectedText;
-            this.props.onSelectionChange(selectedText);
         }
     }
 
@@ -142,6 +138,10 @@ export class Text extends React.Component<Types.TextProps, Types.Stateless> impl
 
     blur() {
         // No-op
+    }
+
+    getSelectedText(): string {
+        return ''; // Implemented for 'windows' only (requires support from RN).
     }
 }
 

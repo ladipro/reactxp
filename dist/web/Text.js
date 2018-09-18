@@ -140,6 +140,9 @@ var Text = /** @class */ (function (_super) {
             }
         }
     };
+    Text.prototype.getSelectedText = function () {
+        return ''; // Not implemented yet.
+    };
     Text.contextTypes = {
         focusArbitrator: PropTypes.object
     };
