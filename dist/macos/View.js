@@ -36,6 +36,23 @@ var View = /** @class */ (function (_super) {
             var name_1 = _a[_i];
             _loop_1(name_1);
         }
+        var _loop_2 = function (name_2) {
+            var handler = this_2._internalProps[name_2];
+            if (name_2 === 'onDragStart') {
+                this_2._internalProps.allowDrag = true;
+            }
+            if (handler) {
+                this_2._internalProps[name_2] = function (e) {
+                    var dndEvent = EventHelpers_1.default.toDragEvent(e);
+                    handler(dndEvent);
+                };
+            }
+        };
+        var this_2 = this;
+        for (var _b = 0, _c = ['onDragStart', 'onDrag', 'onDragEnd']; _b < _c.length; _b++) {
+            var name_2 = _c[_b];
+            _loop_2(name_2);
+        }
     };
     return View;
 }(View_1.View));
