@@ -20,8 +20,10 @@ export declare class Image extends React.Component<Types.ImageProps, Types.State
     protected _mountedComponent: RN.ReactNativeBaseComponent<any, any> | null;
     private _nativeImageWidth;
     private _nativeImageHeight;
+    private _forceCache;
     protected _getAdditionalProps(): RN.ImageProperties | {};
     render(): JSX.Element;
+    componentWillReceiveProps(nextProps: Types.ImageProps): void;
     protected _onMount: (component: RN.ReactNativeBaseComponent<any, any> | null) => void;
     setNativeProps(nativeProps: RN.ImageProperties): void;
     getChildContext(): {
@@ -31,6 +33,7 @@ export declare class Image extends React.Component<Types.ImageProps, Types.State
     private _onLoad;
     private _onError;
     private _buildSource;
+    private _shouldForceCacheOnError;
     getNativeWidth(): number | undefined;
     getNativeHeight(): number | undefined;
 }

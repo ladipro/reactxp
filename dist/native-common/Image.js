@@ -31,6 +31,7 @@ var React = require("react");
 var RN = require("react-native");
 var SyncTasks = require("synctasks");
 var _ = require("./lodashMini");
+var Platform_1 = require("./Platform");
 var Styles_1 = require("./Styles");
 var _styles = {
     defaultImage: Styles_1.default.createImageStyle({
@@ -45,6 +46,7 @@ var Image = /** @class */ (function (_super) {
     function Image() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this._mountedComponent = null;
+        _this._forceCache = false;
         _this._onMount = function (component) {
             _this._mountedComponent = component;
         };
@@ -62,7 +64,13 @@ var Image = /** @class */ (function (_super) {
             if (!_this._mountedComponent) {
                 return;
             }
-            if (_this.props.onError) {
+            if (!_this._forceCache && _this._shouldForceCacheOnError()) {
+                // Some platforms will not use expired cache data unless explicitly told so.
+                // Let's try again with cache: 'force-cache'.
+                _this._forceCache = true;
+                _this.forceUpdate();
+            }
+            else if (_this.props.onError) {
                 var event_1 = e.nativeEvent;
                 _this.props.onError(new Error(event_1.error));
             }
@@ -118,6 +126,11 @@ var Image = /** @class */ (function (_super) {
         };
         return (React.createElement(RN.Image, __assign({ ref: this._onMount, style: this.getStyles(), resizeMode: resizeMode, resizeMethod: this.props.resizeMethod, accessibilityLabel: this.props.accessibilityLabel, onLoad: this.props.onLoad ? this._onLoad : undefined, onError: this._onError, testID: this.props.testId }, additionalProps, extendedProps), this.props.children));
     };
+    Image.prototype.componentWillReceiveProps = function (nextProps) {
+        if (!_.isEqual(this.props, nextProps)) {
+            this._forceCache = false;
+        }
+    };
     Image.prototype.setNativeProps = function (nativeProps) {
         if (this._mountedComponent) {
             this._mountedComponent.setNativeProps(nativeProps);
@@ -141,7 +154,23 @@ var Image = /** @class */ (function (_super) {
         if (this.props.headers) {
             source.headers = this.props.headers;
         }
+        if (this._forceCache) {
+            source.cache = 'force-cache';
+        }
         return source;
+    };
+    Image.prototype._shouldForceCacheOnError = function () {
+        if (Platform_1.default.getType() !== 'ios') {
+            return false;
+        }
+        if (this.props.headers) {
+            for (var key in this.props.headers) {
+                if (key.toLowerCase() === 'cache-control' && this.props.headers[key].toLowerCase() === 'max-stale') {
+                    return true;
+                }
+            }
+        }
+        return false;
     };
     // Note: This works only if you have an onLoaded handler and wait for the image to load.
     Image.prototype.getNativeWidth = function () {

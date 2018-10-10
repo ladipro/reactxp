@@ -13,6 +13,7 @@ import RN = require('react-native');
 import SyncTasks = require('synctasks');
 import _ = require('./lodashMini');
 
+import Platform from './Platform';
 import Styles from './Styles';
 import Types = require('../common/Types');
 
@@ -72,6 +73,7 @@ export class Image extends React.Component<Types.ImageProps, Types.Stateless> im
     protected _mountedComponent: RN.ReactNativeBaseComponent<any, any>|null = null;
     private _nativeImageWidth: number|undefined;
     private _nativeImageHeight: number|undefined;
+    private _forceCache = false;
 
     protected _getAdditionalProps(): RN.ImageProperties | {} {
         return {};
@@ -109,6 +111,12 @@ export class Image extends React.Component<Types.ImageProps, Types.Stateless> im
                 { this.props.children }
             </RN.Image>
         );
+    }
+
+    componentWillReceiveProps(nextProps: Types.ImageProps) {
+        if (!_.isEqual(this.props, nextProps)) {
+            this._forceCache = false;
+        }
     }
 
     protected _onMount = (component: RN.ReactNativeBaseComponent<any, any>|null) => {
@@ -150,7 +158,13 @@ export class Image extends React.Component<Types.ImageProps, Types.Stateless> im
             return;
         }
 
-        if (this.props.onError) {
+        if (!this._forceCache && this._shouldForceCacheOnError()) {
+            // Some platforms will not use expired cache data unless explicitly told so.
+            // Let's try again with cache: 'force-cache'.
+            this._forceCache = true;
+            this.forceUpdate();
+
+        } else if (this.props.onError) {
             const event = e.nativeEvent as any;
             this.props.onError(new Error(event.error));
         }
@@ -166,8 +180,25 @@ export class Image extends React.Component<Types.ImageProps, Types.Stateless> im
         if (this.props.headers) {
             source.headers = this.props.headers;
         }
+        if (this._forceCache) {
+            source.cache = 'force-cache';
+        }
 
         return source;
+    }
+
+    private _shouldForceCacheOnError(): boolean {
+        if (Platform.getType() !== 'ios') {
+            return false;
+        }
+        if (this.props.headers) {
+            for (let key in this.props.headers) {
+                if (key.toLowerCase() === 'cache-control' && this.props.headers[key].toLowerCase() === 'max-stale') {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // Note: This works only if you have an onLoaded handler and wait for the image to load.
